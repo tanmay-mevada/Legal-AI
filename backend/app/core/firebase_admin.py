@@ -3,8 +3,10 @@ from firebase_admin import credentials, auth
 import os
 
 if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-    cred = credentials.ApplicationDefault()  # uses ADC if set in env
+    cred = credentials.ApplicationDefault()
 else:
-    cred = credentials.Certificate("path/to/serviceAccountKey.json")
+    cred = credentials.Certificate("D:/legal-ai/legal-ai/backend/serviceAccountKey.json")
 
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "your-project-id.appspot.com"
+})

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
-import { auth, provider } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -15,12 +15,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (!user) {
-    const login = async () => {
-      await signInWithPopup(auth, provider);
-    };
-    return <button onClick={login}>Continue with Google</button>;
-  }
+  if (loading) return <div className="flex items-center justify-center h-screen"><span className="text-lg">Loading...</span></div>;
+  if (!user) return null;
   return <>{children}</>;
 }
