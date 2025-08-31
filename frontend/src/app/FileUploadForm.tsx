@@ -13,13 +13,37 @@ export default function FileUploadForm() {
     e.preventDefault();
     if (!file) return;
     setStatus("Uploading...");
+    const path = `user-files/${file.name}`;
     const { error } = await supabase.storage
       .from("uploads")
-      .upload(`user-files/${file.name}`, file);
+      .upload(path, file);
     if (error) {
       setStatus("Upload failed: " + error.message);
     } else {
-      setStatus("Upload successful!");
+      // Store metadata in documents table
+      // Get user info if available (replace with your auth logic)
+      const user = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      const user_id = user ? user.id || user.email : "anonymous";
+      const metadata = {
+        user_id,
+        file_name: file.name,
+        bucket_path: path,
+        content_type: file.type,
+        size_bytes: file.size,
+        pages: null, // Set if you extract page count
+        status: "uploaded",
+        summary: null,
+        processed_at: null,
+        created_at: new Date().toISOString(),
+      };
+      const { error: dbError } = await supabase
+        .from("documents")
+        .insert([metadata]);
+      if (dbError) {
+        setStatus("Upload succeeded, but DB insert failed: " + dbError.message);
+      } else {
+        setStatus("Upload and metadata saved!");
+      }
     }
   };
 
