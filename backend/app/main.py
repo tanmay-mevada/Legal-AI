@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.upload import router as upload_router
+from app.api.documents import router as documents_router
 
 app = FastAPI()
 
@@ -14,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(upload_router)
+app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
 
 @app.get("/")
 def read_root():
