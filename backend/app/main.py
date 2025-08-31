@@ -4,8 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.upload import router as upload_router
 from app.api.documents import router as documents_router
+from app.api import process
 
 app = FastAPI()
+
+app.include_router(process.router, prefix="/process", tags=["process"])
+app.include_router(upload_router, prefix="/upload", tags=["upload"])
+app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
 
 # Allow frontend to access backend
 app.add_middleware(
@@ -15,9 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-app.include_router(upload_router)
-app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
 
 @app.get("/")
 def read_root():
