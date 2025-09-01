@@ -52,8 +52,6 @@ kiwisolver==1.4.7
 MarkupSafe==2.1.5
 matplotlib==3.9.2
 matplotlib-inline==0.1.7
-# Editable install with no version control (mlproject==0.0.1)
--e d:\predicting-student-performance-using-machine-learning-main
 nest-asyncio==1.6.0
 nltk==3.9.1
 numpy==1.26.4

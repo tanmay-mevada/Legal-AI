@@ -1,30 +1,23 @@
 import os
 from google.cloud import documentai_v1 as documentai
-from google.oauth2 import service_account
 
-PROJECT_ID = os.getenv("GCP_PROJECT_ID")
-LOCATION = os.getenv("GCP_LOCATION", "us")  # e.g. "us" or "us-latency"
-PROCESSOR_ID = os.getenv("DOCAI_PROCESSOR_ID")  # from GCP console
+project_id = os.getenv("GCP_PROJECT_ID")
+location = os.getenv("GCP_LOCATION", "us")
+processor_id = os.getenv("DOC_AI_PROCESSOR_ID")
 
-creds = service_account.Credentials.from_service_account_file(
-    os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-)
+client = documentai.DocumentProcessorServiceClient()
+processor_name = client.processor_path(project_id, location, processor_id)
 
-client = documentai.DocumentProcessorServiceClient(credentials=creds)
-
-def process_document_bytes(file_bytes: bytes, mime_type="application/pdf"):
-    name = client.processor_path(PROJECT_ID, LOCATION, PROCESSOR_ID)
-
+def process_document_bytes(file_bytes: bytes):
     raw_document = documentai.RawDocument(
         content=file_bytes,
-        mime_type=mime_type
+        mime_type="application/pdf"
     )
 
     request = documentai.ProcessRequest(
-        name=name,
+        name=processor_name,
         raw_document=raw_document
     )
 
     result = client.process_document(request=request)
-
     return result.document
