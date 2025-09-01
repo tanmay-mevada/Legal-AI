@@ -1,16 +1,12 @@
 import os
+import io
 import uuid
-from fastapi import APIRouter, Depends, Header, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from supabase import create_client, Client
 from app.core.firebase_admin import get_current_user_from_auth_header
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-    raise RuntimeError("Supabase env vars missing")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+from app.core.documentai_client import process_document_bytes
+from app.core.supabase import supabase  # ✅ wrapper we created
 
 router = APIRouter()
 
@@ -20,7 +16,7 @@ router = APIRouter()
 # ---------------------------
 class DocumentCreate(BaseModel):
     file_name: str
-    bucket_path: str  # original path from frontend
+    bucket_path: str  # frontend will send the path it uploaded to
     size_bytes: int | None = None
     content_type: str | None = None
     pages: int | None = None
@@ -29,32 +25,6 @@ class DocumentCreate(BaseModel):
 # ---------------------------
 # Routes
 # ---------------------------
-@router.post("/{doc_id}/process")
-def process_document(doc_id: str, authorization: str | None = Header(None)):
-    user = get_current_user_from_auth_header(authorization)
-    uid = user.get("uid")
-
-    # 1. Fetch document
-    res = supabase.table("documents").select("*").eq("id", doc_id).execute()
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    doc = res.data[0]
-    if doc["user_id"] != uid:
-        raise HTTPException(status_code=403, detail="Not owner")
-
-    # 2. Mock processing result
-    updated = supabase.table("documents").update({
-        "status": "processed",
-        "extracted_text": "This is sample extracted text. (Replace with Document AI output)"
-    }).eq("id", doc_id).execute()
-
-    if not updated.data:
-        raise HTTPException(status_code=500, detail="Failed to update document")
-
-    return {"message": "Document processed", "document": updated.data[0]}
-
-
 @router.post("/", status_code=201)
 def create_document(payload: DocumentCreate, authorization: str | None = Header(None)):
     """Insert document metadata into Supabase table"""
@@ -63,17 +33,15 @@ def create_document(payload: DocumentCreate, authorization: str | None = Header(
     if not uid:
         raise HTTPException(status_code=401, detail="No UID found")
 
-    # Always generate a unique path in Supabase storage
-    unique_filename = f"user-files/{uid}/{uuid.uuid4()}_{payload.file_name}"
-
+    # ✅ Use the exact path frontend used (don’t generate a new one here)
     row = {
         "user_id": uid,
         "file_name": payload.file_name,
-        "bucket_path": unique_filename,
+        "bucket_path": payload.bucket_path,  # keep consistent with Supabase
         "content_type": payload.content_type,
         "size_bytes": payload.size_bytes,
         "pages": payload.pages,
-        "status": "queued"
+        "status": "uploaded",
     }
 
     try:
@@ -108,11 +76,7 @@ def get_document(doc_id: str, authorization: str | None = Header(None)):
     user = get_current_user_from_auth_header(authorization)
     uid = user.get("uid")
 
-    try:
-        res = supabase.table("documents").select("*").eq("id", doc_id).execute()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Supabase fetch failed: {str(e)}")
-
+    res = supabase.table("documents").select("*").eq("id", doc_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -123,17 +87,59 @@ def get_document(doc_id: str, authorization: str | None = Header(None)):
     return {"document": doc}
 
 
+@router.post("/{doc_id}/process")
+def process_file(doc_id: str, authorization: str | None = Header(None)):
+    """Download file from storage, process with Document AI, update DB"""
+    user = get_current_user_from_auth_header(authorization)
+    uid = user.get("uid")
+
+    # 1. Get document metadata
+    res = supabase.table("documents").select("*").eq("id", doc_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Document not found")
+    doc = res.data[0]
+    if doc["user_id"] != uid:
+        raise HTTPException(status_code=403, detail="Not owner")
+
+    # 2. Download file from Supabase storage
+    bucket = os.getenv("SUPABASE_BUCKET", "uploads")
+    clean_path = doc["bucket_path"]  # ✅ already relative to bucket
+    print("Bucket:", bucket)
+    print("Path used for download:", clean_path)
+
+    try:
+        file_response = supabase.storage.from_(bucket).download(clean_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Storage download failed: {e}")
+
+    if not file_response:
+        raise HTTPException(status_code=500, detail="Failed to download file")
+    file_bytes = io.BytesIO(file_response).read()
+
+    # 3. Process with Document AI
+    try:
+        result = process_document_bytes(file_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Document AI failed: {e}")
+
+    # 4. Update DB with extracted text
+    extracted_text = result.text
+    supabase.table("documents").update({
+        "status": "processed",
+        "extracted_text": extracted_text,
+        "processed_at": datetime.utcnow().isoformat()
+    }).eq("id", doc_id).execute()
+
+    return {"message": "Processing complete", "extracted_text": extracted_text[:500]}
+
+
 @router.get("/{doc_id}/signed-url")
 def create_signed_url(doc_id: str, expires_in: int = 3600, authorization: str | None = Header(None)):
     """Generate signed URL for accessing a file in Supabase storage"""
     user = get_current_user_from_auth_header(authorization)
     uid = user.get("uid")
 
-    try:
-        res = supabase.table("documents").select("*").eq("id", doc_id).execute()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Supabase fetch failed: {str(e)}")
-
+    res = supabase.table("documents").select("*").eq("id", doc_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -141,12 +147,9 @@ def create_signed_url(doc_id: str, expires_in: int = 3600, authorization: str | 
     if doc["user_id"] != uid:
         raise HTTPException(status_code=403, detail="Not owner")
 
-    bucket_name = "uploads"
+    bucket_name = os.getenv("SUPABASE_BUCKET", "uploads")
     path = doc["bucket_path"]
 
-    try:
-        signed = supabase.storage.from_(bucket_name).create_signed_url(path, expires_in)
-        signed_url = signed.get("signed_url") if isinstance(signed, dict) else signed
-        return {"signed_url": signed_url}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Signed URL creation failed: {str(e)}")
+    signed = supabase.storage.from_(bucket_name).create_signed_url(path, expires_in)
+    signed_url = signed.get("signed_url") if isinstance(signed, dict) else signed
+    return {"signed_url": signed_url}
