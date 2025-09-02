@@ -145,8 +145,8 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
 
     return {
         "message": "Processing complete",
-        "extracted_text": extracted_text[:500],
-        "summary": (summary[:500] if summary else "")
+        "extracted_text": extracted_text,
+        "summary": (summary or "")
     }
 
 

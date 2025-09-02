@@ -82,19 +82,21 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 bg-neural">
+    <div className="min-h-screen bg-white dark:bg-dark-950 dark:bg-neural">
       <Navbar user={user} />
-      <main className="max-w-xl p-6 mx-auto mt-10">
-        <div className="p-8 border glass-morphism rounded-3xl shadow-glow border-dark-700/50">
-          <h2 className="mb-4 text-3xl font-bold">
-            <span className="text-white">Welcome, </span>
-            <span className="text-gradient">
-              {user.displayName || user.email}!
-            </span>
-          </h2>
-          <p className="mb-6 leading-relaxed text-dark-300">
-            Upload your rental agreements, contracts, or other documents below
-            to get instant AI-powered analysis.
+      <main className="max-w-7xl p-6 mx-auto mt-10">
+        <div className="p-8 border glass-morphism rounded-3xl shadow-glow border-slate-200 dark:border-dark-700/50 bg-white/60 dark:bg-transparent">
+          <div className="flex items-center justify-between">
+            <h2 className="mb-4 text-3xl font-bold">
+              <span className="text-slate-900 dark:text-white">Welcome, </span>
+              <span className="text-gradient">
+                {user.displayName || user.email}!
+              </span>
+            </h2>
+            <div className="text-xs text-slate-500 dark:text-dark-300">Legal AI</div>
+          </div>
+          <p className="mb-6 leading-relaxed text-slate-600 dark:text-dark-300">
+            Upload your agreements and get AI-powered extraction and concise summaries.
           </p>
           <FileUploadForm />
         </div>
