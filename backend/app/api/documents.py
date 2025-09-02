@@ -6,6 +6,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 from app.core.firebase_admin import get_current_user_from_auth_header
 from app.core.documentai_client import process_document_bytes
+from app.core.gemini import summarize_with_gemini
 from app.core.supabase import supabase  # ✅ wrapper we created
 
 router = APIRouter()
@@ -120,17 +121,33 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
     try:
         result = process_document_bytes(file_bytes)
     except Exception as e:
+        print("Document AI error:", e)
         raise HTTPException(status_code=500, detail=f"Document AI failed: {e}")
 
     # 4. Update DB with extracted text
     extracted_text = result.text
+    # 5. Summarize with Gemini (Vertex)
+    try:
+        summary = summarize_with_gemini(extracted_text)
+        if summary is not None and not summary.strip():
+            print("Gemini returned empty summary")
+            summary = None  # store NULL instead of empty string
+    except Exception as e:
+        print("Gemini error:", e)
+        summary = None  # don't fail the whole request if summary fails
+
     supabase.table("documents").update({
         "status": "processed",
         "extracted_text": extracted_text,
+        "summary": summary,
         "processed_at": datetime.utcnow().isoformat()
     }).eq("id", doc_id).execute()
 
-    return {"message": "Processing complete", "extracted_text": extracted_text[:500]}
+    return {
+        "message": "Processing complete",
+        "extracted_text": extracted_text[:500],
+        "summary": (summary[:500] if summary else "")
+    }
 
 
 @router.get("/{doc_id}/signed-url")
