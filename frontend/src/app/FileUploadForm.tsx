@@ -6,8 +6,9 @@ import { getAuth } from "firebase/auth";
 export default function FileUploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
-  const [docId, setDocId] = useState<string | null>(null); // ✅ store backend doc_id
+  const [docId, setDocId] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
+  const [extractedText, setExtractedText] = useState<string>("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
@@ -90,6 +91,25 @@ export default function FileUploadForm() {
       setStatus("Processing failed: " + (data.detail || "unknown error"));
     } else {
       setStatus("Processing done! Extracted text saved.");
+      // Fetch the updated document to display extracted_text
+      try {
+        const token2 = await user.getIdToken();
+        const docRes = await fetch(
+          `http://127.0.0.1:8000/api/documents/${docId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token2}`,
+            },
+          }
+        );
+        const docData = await docRes.json();
+        if (docRes.ok) {
+          setExtractedText(docData.document?.extracted_text || "");
+        }
+      } catch (e) {
+        // ignore fetch errors for display
+      }
     }
     setProcessing(false);
   };
@@ -124,6 +144,13 @@ export default function FileUploadForm() {
       )}
 
       {status && <div className="text-sm text-gray-600">{status}</div>}
+
+      {extractedText && (
+        <div className="p-4 mt-2 border rounded bg-dark-900 border-dark-700/60">
+          <h3 className="mb-2 text-lg font-semibold text-white">Extracted text</h3>
+          <pre className="whitespace-pre-wrap text-dark-200">{extractedText}</pre>
+        </div>
+      )}
     </div>
   );
 }
