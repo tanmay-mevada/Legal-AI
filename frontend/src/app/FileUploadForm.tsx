@@ -9,6 +9,7 @@ export default function FileUploadForm() {
   const [docId, setDocId] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
   const [extractedText, setExtractedText] = useState<string>("");
+  const [summary, setSummary] = useState<string>("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
@@ -91,6 +92,9 @@ export default function FileUploadForm() {
       setStatus("Processing failed: " + (data.detail || "unknown error"));
     } else {
       setStatus("Processing done! Extracted text saved.");
+      if (data.summary) {
+        setSummary(data.summary);
+      }
       // Fetch the updated document to display extracted_text
       try {
         const token2 = await user.getIdToken();
@@ -106,6 +110,7 @@ export default function FileUploadForm() {
         const docData = await docRes.json();
         if (docRes.ok) {
           setExtractedText(docData.document?.extracted_text || "");
+          setSummary(docData.document?.summary || "");
         }
       } catch (e) {
         // ignore fetch errors for display
@@ -149,6 +154,13 @@ export default function FileUploadForm() {
         <div className="p-4 mt-2 border rounded bg-dark-900 border-dark-700/60">
           <h3 className="mb-2 text-lg font-semibold text-white">Extracted text</h3>
           <pre className="whitespace-pre-wrap text-dark-200">{extractedText}</pre>
+        </div>
+      )}
+
+      {summary && (
+        <div className="p-4 mt-2 border rounded bg-dark-900 border-dark-700/60">
+          <h3 className="mb-2 text-lg font-semibold text-white">Gemini summary</h3>
+          <pre className="whitespace-pre-wrap text-dark-200">{summary}</pre>
         </div>
       )}
     </div>
