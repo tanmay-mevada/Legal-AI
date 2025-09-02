@@ -20,6 +20,17 @@ export default function Navbar({ user }: { user: import("firebase/auth").User | 
           <ThemeToggle />
           {user && (
             <>
+              {/* Admin Panel Link */}
+              {[
+                "tanmaymevada24@gmail.com"
+              ].includes(user.email || "") && (
+                <a
+                  href="/admin"
+                  className="px-4 py-2 font-medium text-white transition-all duration-300 transform rounded-lg shadow-sm bg-gradient-to-r from-neural-600 to-neural-500 hover:from-neural-500 hover:to-neural-400 hover:scale-102 hover:shadow-md"
+                >
+                  Admin Panel
+                </a>
+              )}
               <div className="flex items-center space-x-3">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-electric-400">
                   <span className="text-sm font-semibold text-white">

@@ -11,8 +11,25 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      
+      // Track login activity
+      if (firebaseUser) {
+        try {
+          const token = await firebaseUser.getIdToken();
+          await fetch("http://localhost:8000/api/activity/track-login", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+        } catch (error) {
+          console.error("Failed to track login:", error);
+        }
+      }
+      
       setLoading(false);
     });
     return () => unsubscribe();
