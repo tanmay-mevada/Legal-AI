@@ -1,123 +1,98 @@
-"use client";
-import { useEffect, useState } from "react";
-import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
-import { auth, provider } from "@/lib/firebase";
+"use client"
 
-import FileUploadForm from "./FileUploadForm";
-import Navbar from "./Navbar";
+import { useEffect, useState } from "react"
+import { signInWithPopup, onAuthStateChanged, type User } from "firebase/auth"
+import { auth, provider } from "@/lib/firebase"
+import Navbar from "./components/Navbar"
+import FileUploadForm from "./components/file-upload-form"
+import { ShieldCheck, LogIn } from "lucide-react"
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      
-      // Track login activity
+      setUser(firebaseUser)
       if (firebaseUser) {
         try {
-          const token = await firebaseUser.getIdToken();
+          const token = await firebaseUser.getIdToken()
           await fetch("http://localhost:8000/api/activity/track-login", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          });
+          })
         } catch (error) {
-          console.error("Failed to track login:", error);
+          console.error("Failed to track login:", error)
         }
       }
-      
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   const login = async () => {
-    await signInWithPopup(auth, provider);
-  };
+    await signInWithPopup(auth, provider)
+  }
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
-        <div className="w-16 h-16 mb-4 border-4 rounded-full border-dark-700 border-t-electric-400 animate-spin"></div>
-        <span className="text-lg font-medium text-dark-300 animate-pulse">
-          Loading...
-        </span>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 rounded-full animate-spin border-slate-300 border-t-blue-600" />
+          <span className="text-sm text-slate-600">Loading</span>
+        </div>
       </div>
-    );
+    )
+  }
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-dark-950 bg-neural">
-        <div className="flex flex-col items-center w-full max-w-md p-8 mx-4 border glass-morphism rounded-3xl border-dark-700/50 shadow-glow">
-          <div className="mb-6">
-            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-electric-400 via-primary-500 to-neural-500 rounded-2xl shadow-glow animate-float">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+      <div className="flex items-center justify-center min-h-screen px-4 bg-background">
+        <div className="w-full max-w-sm p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center justify-center w-10 h-10 text-white bg-blue-600 rounded-lg">
+              <ShieldCheck className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900">Legal AI</h1>
+              <p className="text-xs text-slate-600">Secure document insights</p>
             </div>
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-gradient">
-            Welcome to Legal AI
-          </h1>
-          <p className="mb-8 text-center text-dark-300">
-            Sign in to get started.
-            <br />
-            <span className="text-electric-300">
-              Your documents are secure and private.
-            </span>
-          </p>
           <button
             onClick={login}
-            className="relative flex items-center justify-center w-full gap-3 px-6 py-3 overflow-hidden text-lg font-semibold text-white transition-all duration-300 transform bg-gradient-to-r from-primary-600 to-electric-500 hover:from-primary-500 hover:to-electric-400 rounded-xl shadow-glow hover:shadow-glow-lg hover:scale-102 group"
+            className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-500"
           >
-            <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-r from-white/10 to-transparent group-hover:opacity-100"></div>
-            <svg className="relative z-10 w-6 h-6" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M21.35 11.1h-9.18v2.98h5.27c-.23 1.25-1.39 3.67-5.27 3.67-3.17 0-5.76-2.62-5.76-5.85s2.59-5.85 5.76-5.85c1.81 0 3.02.77 3.72 1.43l2.54-2.47C16.13 4.6 14.36 3.7 12.17 3.7c-4.7 0-8.52 3.81-8.52 8.5s3.82 8.5 8.52 8.5c4.92 0 8.18-3.45 8.18-8.3 0-.56-.06-1.1-.15-1.6z"
-                fill="currentColor"
-              />
-            </svg>
-            <span className="relative z-10">Continue with Google</span>
+            <LogIn className="w-4 h-4" aria-hidden="true" />
+            <span>Continue with Google</span>
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-950 dark:bg-neural">
+    <div className="min-h-screen bg-background">
       <Navbar user={user} />
-      <main className="max-w-7xl p-6 mx-auto mt-10">
-        <div className="p-8 border glass-morphism rounded-3xl shadow-glow border-slate-200 dark:border-dark-700/50 bg-white/60 dark:bg-transparent">
+      <main className="max-w-6xl px-4 pb-12 mx-auto mt-8">
+        <section className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="mb-4 text-3xl font-bold">
-              <span className="text-slate-900 dark:text-white">Welcome, </span>
-              <span className="text-gradient">
-                {user.displayName || user.email}!
-              </span>
+            <h2 className="text-2xl font-semibold text-pretty text-slate-900">
+              Welcome, <span className="text-blue-600">{user.displayName || user.email}</span>
             </h2>
-            <div className="text-xs text-slate-500 dark:text-dark-300">Legal AI</div>
+            <span className="text-xs text-slate-600">Legal AI</span>
           </div>
-          <p className="mb-6 leading-relaxed text-slate-600 dark:text-dark-300">
-            Upload your agreements and get AI-powered extraction and concise summaries.
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            Upload agreements to extract key details and get concise AI summaries.
           </p>
+        </section>
+
+        <section className="p-6 bg-white border rounded-2xl border-slate-200">
           <FileUploadForm />
-        </div>
+        </section>
       </main>
     </div>
-  );
+  )
 }

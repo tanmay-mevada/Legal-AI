@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import UploadCard from "./components/UploadCard";
-import ProcessButton from "./components/ProcessButton";
-import ResultTabs from "./components/ResultTabs";
+import UploadCard from "./UploadCard";
+import ProcessButton from "./ProcessButton";
+import ResultTabs from "./ResultTabs";
 
 export default function FileUploadForm() {
   const [status, setStatus] = useState<string>("");
   const [docId, setDocId] = useState<string | null>(null);
-  const [processing, setProcessing] = useState<boolean>(false);
+  //const [processing, setProcessing] = useState<boolean>(false);
   const [extractedText, setExtractedText] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
 
