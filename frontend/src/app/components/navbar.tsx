@@ -1,7 +1,7 @@
 "use client";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import ThemeToggle from "./components/ThemeToggle";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar({ user }: { user: import("firebase/auth").User | null }) {
   return (
