@@ -2,32 +2,32 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { supabase } from "@/lib/supabaseClient";
+//import { supabase } from "@/lib/supabaseClient";
 import AdminDashboard from "./components/AdminDashboard";
-import AdminAuthGuard from "./components/AdminAuthGuard";
+//import AdminAuthGuard from "./components/AdminAuthGuard";
 
-interface Document {
-  id: string;
-  user_id: string;
-  file_name: string;
-  bucket_path: string;
-  content_type: string;
-  size_bytes: number;
-  pages: number;
-  status: string;
-  created_at: string;
-  processed_at?: string;
-}
+// interface Document {
+//   id: string;
+//   user_id: string;
+//   file_name: string;
+//   bucket_path: string;
+//   content_type: string;
+//   size_bytes: number;
+//   pages: number;
+//   status: string;
+//   created_at: string;
+//   processed_at?: string;
+// }
 
-interface UserWithDocuments {
-  uid: string;
-  email: string;
-  displayName: string;
-  lastSignInTime: string;
-  documents: Document[];
-  totalDocuments: number;
-  totalSize: number;
-}
+// interface UserWithDocuments {
+//   uid: string;
+//   email: string;
+//   displayName: string;
+//   lastSignInTime: string;
+//   documents: Document[];
+//   totalDocuments: number;
+//   totalSize: number;
+// }
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -64,11 +64,11 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gradient mb-6">Admin Panel</h1>
-          <p className="text-dark-300 mb-8">Please sign in to access the admin panel</p>
+          <h1 className="mb-6 text-4xl font-bold text-gradient">Admin Panel</h1>
+          <p className="mb-8 text-dark-300">Please sign in to access the admin panel</p>
           <button
             onClick={() => window.location.href = "/"}
-            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            className="px-6 py-3 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700"
           >
             Go to Login
           </button>
@@ -81,11 +81,11 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gradient mb-6">Access Denied</h1>
-          <p className="text-dark-300 mb-8">You don't have admin privileges</p>
+          <h1 className="mb-6 text-4xl font-bold text-gradient">Access Denied</h1>
+          <p className="mb-8 text-dark-300">You dont have admin privileges</p>
           <button
             onClick={() => window.location.href = "/"}
-            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            className="px-6 py-3 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700"
           >
             Go Back
           </button>
