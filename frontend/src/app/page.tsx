@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { signInWithPopup, onAuthStateChanged, type User } from "firebase/auth"
 import { auth, provider } from "@/lib/firebase"
-import Navbar from "./components/Navbar"
+import Navbar from "./components/navbar"
 import FileUploadForm from "./components/file-upload-form"
 import { ShieldCheck, LogIn } from "lucide-react"
 
