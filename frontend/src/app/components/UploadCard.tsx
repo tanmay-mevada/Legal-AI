@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getAuth } from "firebase/auth";
 
 type Props = {
-  onUploaded: (args: { docId: string; fileName: string }) => void;
+  onUploaded: (args: { docId: string; fileName: string; bucketPath: string }) => void;
   onStatus?: (msg: string) => void;
 };
 
@@ -22,16 +22,24 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     e.preventDefault();
     if (!file) return;
 
+    console.log("Starting upload for file:", file.name);
     setUploading(true);
     setStatus("Uploading...");
 
-    const path = `user-files/${file.name}`;
-    const { error } = await supabase.storage.from("uploads").upload(path, file);
+  // Sanitize file name for Supabase Storage
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `user-files/${safeName}`;
+  console.log("Uploading to path:", path);
+  
+  const { error } = await supabase.storage.from("uploads").upload(path, file);
     if (error) {
+      console.error("Supabase upload error:", error);
       setUploading(false);
       setStatus("Upload failed: " + error.message);
       return;
     }
+    
+    console.log("Supabase upload successful");
 
     const auth = getAuth();
     const user = auth.currentUser;
@@ -42,6 +50,8 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
+    console.log("Creating document metadata...");
+    
     const res = await fetch("http://127.0.0.1:8000/api/documents/", {
       method: "POST",
       headers: {
@@ -56,15 +66,26 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
       }),
     });
 
+    console.log("Document creation response status:", res.status);
     const data = await res.json();
+    console.log("Document creation response data:", data);
+    
     if (!res.ok) {
+      console.error("Document creation failed:", data);
       setUploading(false);
       setStatus("Metadata insert failed: " + (data.detail || "unknown error"));
       return;
     }
 
-    onUploaded({ docId: data.document.id, fileName: file.name });
-    setStatus("Upload complete. Ready to process.");
+    // Only call onUploaded if document was inserted and has an id
+    if (data && data.document && data.document.id) {
+      console.log("Calling onUploaded with:", { docId: data.document.id, fileName: file.name, bucketPath: path });
+      onUploaded({ docId: data.document.id, fileName: file.name, bucketPath: path });
+      setStatus("Upload complete. Ready to process.");
+    } else {
+      console.error("No document ID returned:", data);
+      setStatus("Upload succeeded, but no document ID returned.");
+    }
     setUploading(false);
   };
 
