@@ -47,3 +47,47 @@ CREATE TRIGGER update_user_activity_updated_at
     BEFORE UPDATE ON user_activity 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Create documents table for storing document metadata and processing results
+CREATE TABLE IF NOT EXISTS documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    bucket_path TEXT NOT NULL,
+    content_type TEXT,
+    size_bytes INTEGER,
+    pages INTEGER,
+    status TEXT DEFAULT 'uploaded' CHECK (status IN ('uploaded', 'processing', 'processed', 'failed')),
+    extracted_text TEXT,
+    summary TEXT,
+    processed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for documents table
+CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
+CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at);
+
+-- Enable Row Level Security (RLS) for documents table
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for documents table
+CREATE POLICY "Users can view own documents" ON documents
+    FOR SELECT USING (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can insert own documents" ON documents
+    FOR INSERT WITH CHECK (auth.uid()::text = user_id);
+
+CREATE POLICY "Users can update own documents" ON documents
+    FOR UPDATE USING (auth.uid()::text = user_id);
+
+CREATE POLICY "Service role can access all documents" ON documents
+    FOR ALL USING (true);
+
+-- Create trigger to automatically update updated_at for documents
+CREATE TRIGGER update_documents_updated_at 
+    BEFORE UPDATE ON documents 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
