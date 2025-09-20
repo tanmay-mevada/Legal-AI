@@ -41,13 +41,20 @@ export default function FileUploadArea({ onFileUpload, disabled = false }: FileU
     // Validate file type
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a PDF or Word document');
+      alert('File type not supported. Please upload PDF, DOC, or DOCX files only.');
       return;
     }
 
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+    // Validate file size (20MB limit to match backend)
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      alert(`File size (${fileSizeMB}MB) exceeds the maximum limit of 20MB. Please use a smaller file.`);
+      return;
+    }
+
+    if (file.size === 0) {
+      alert('File appears to be empty. Please upload a valid document.');
       return;
     }
 
@@ -148,7 +155,7 @@ export default function FileUploadArea({ onFileUpload, disabled = false }: FileU
               Drag and drop your file here, or click to browse
             </p>
             <div className="text-xs text-gray-500 dark:text-gray-500">
-              Supports PDF, DOC, DOCX files up to 10MB
+              Supports PDF, DOC, DOCX files up to 20MB
             </div>
           </div>
         </div>

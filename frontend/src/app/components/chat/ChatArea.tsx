@@ -14,6 +14,17 @@ interface Document {
   extracted_text?: string;
   summary?: string;
   processed_at?: string;
+  error_code?: string;
+  error_message?: string;
+  document_metadata?: {
+    documentType?: string;
+    complexity?: string;
+    riskLevel?: "Low" | "Medium" | "High";
+    riskFactors?: string[];
+    wordCount?: number;
+    pageCount?: number;
+    keyParties?: string[];
+  };
 }
 
 interface ChatAreaProps {
@@ -99,6 +110,7 @@ export default function ChatArea({
             content={selectedDocument.extracted_text}
             timestamp={selectedDocument.processed_at}
             contentType="extracted-text"
+            documentMetadata={selectedDocument.document_metadata}
           />
         );
       }
@@ -111,6 +123,7 @@ export default function ChatArea({
             content={selectedDocument.summary}
             timestamp={selectedDocument.processed_at}
             contentType="summary"
+            documentMetadata={selectedDocument.document_metadata}
           />
         );
       }
@@ -122,7 +135,10 @@ export default function ChatArea({
         <MessageBubble
           key="error"
           type="assistant"
-          content="❌ **Processing Failed**\n\nSorry, I couldn't process this document. Please try uploading it again or contact support if the issue persists."
+          content=""
+          errorCode={selectedDocument.error_code}
+          errorMessage={selectedDocument.error_message || "Document processing failed. Please try uploading it again or contact support if the issue persists."}
+          fileName={selectedDocument.file_name}
         />
       );
     }

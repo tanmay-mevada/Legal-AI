@@ -5,6 +5,9 @@ import ReactMarkdown from "react-markdown";
 import { FileText, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExpandableContent from "./ExpandableContent";
+import RiskWarningBar from "./RiskWarningBar";
+import DocumentMetadata from "./DocumentMetadata";
+import ErrorDisplay from "./ErrorDisplay";
 
 interface MessageBubbleProps {
   type: "user" | "assistant";
@@ -13,6 +16,17 @@ interface MessageBubbleProps {
   timestamp?: string;
   isProcessing?: boolean;
   contentType?: "extracted-text" | "summary" | "general";
+  documentMetadata?: {
+    documentType?: string;
+    complexity?: string;
+    riskLevel?: "Low" | "Medium" | "High";
+    riskFactors?: string[];
+    wordCount?: number;
+    pageCount?: number;
+    keyParties?: string[];
+  };
+  errorCode?: string;
+  errorMessage?: string;
 }
 
 export default function MessageBubble({
@@ -22,6 +36,9 @@ export default function MessageBubble({
   timestamp,
   isProcessing = false,
   contentType = "general",
+  documentMetadata,
+  errorCode,
+  errorMessage,
 }: MessageBubbleProps) {
   const formatTime = (dateString?: string) => {
     if (!dateString) return "";
@@ -78,24 +95,57 @@ export default function MessageBubble({
               </div>
             ) : (
               <div>
-                {contentType === "extracted-text" ? (
-                  <ExpandableContent
-                    title="Extracted Text"
-                    content={content}
-                    defaultExpanded={false}
-                    maxPreviewLength={300}
+                {/* Error Display - show if there's an error */}
+                {errorCode && errorMessage && (
+                  <ErrorDisplay
+                    errorCode={errorCode}
+                    errorMessage={errorMessage}
+                    fileName={fileName}
                   />
-                ) : contentType === "summary" ? (
-                  <ExpandableContent
-                    title="AI Summary"
-                    content={content}
-                    defaultExpanded={true}
-                    maxPreviewLength={200}
+                )}
+                
+                {/* Risk Warning Bar - only show if risk level exists and no error */}
+                {!errorCode && documentMetadata?.riskLevel && (
+                  <RiskWarningBar 
+                    riskLevel={documentMetadata.riskLevel}
+                    riskFactors={documentMetadata.riskFactors}
                   />
-                ) : (
-                  <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>{content}</ReactMarkdown>
-                  </div>
+                )}
+                
+                {/* Document Metadata - only show for summary content type and no error */}
+                {!errorCode && contentType === "summary" && documentMetadata && (
+                  <DocumentMetadata
+                    documentType={documentMetadata.documentType}
+                    complexity={documentMetadata.complexity}
+                    wordCount={documentMetadata.wordCount}
+                    pageCount={documentMetadata.pageCount}
+                    keyParties={documentMetadata.keyParties}
+                  />
+                )}
+                
+                {/* Content - only show if no error */}
+                {!errorCode && (
+                  <>
+                    {contentType === "extracted-text" ? (
+                      <ExpandableContent
+                        title="Extracted Text"
+                        content={content}
+                        defaultExpanded={false}
+                        maxPreviewLength={300}
+                      />
+                    ) : contentType === "summary" ? (
+                      <ExpandableContent
+                        title="AI Summary"
+                        content={content}
+                        defaultExpanded={true}
+                        maxPreviewLength={200}
+                      />
+                    ) : (
+                      <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
+                        <ReactMarkdown>{content}</ReactMarkdown>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

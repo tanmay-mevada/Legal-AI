@@ -14,6 +14,15 @@ interface Document {
   status: string;
   created_at: string;
   summary?: string;
+  document_metadata?: {
+    documentType?: string;
+    complexity?: string;
+    riskLevel?: "Low" | "Medium" | "High";
+    riskFactors?: string[];
+    wordCount?: number;
+    pageCount?: number;
+    keyParties?: string[];
+  };
 }
 
 interface SidebarProps {
@@ -161,6 +170,26 @@ export default function Sidebar({
                           {formatDate(doc.created_at)}
                         </span>
                       </div>
+                      
+                      {/* Document Type and Risk Level */}
+                      {doc.document_metadata && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {doc.document_metadata.documentType && (
+                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
+                              {doc.document_metadata.documentType}
+                            </span>
+                          )}
+                          {doc.document_metadata.riskLevel && (
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${
+                              doc.document_metadata.riskLevel === 'High' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300' :
+                              doc.document_metadata.riskLevel === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                              'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                            }`}>
+                              {doc.document_metadata.riskLevel} Risk
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </button>
