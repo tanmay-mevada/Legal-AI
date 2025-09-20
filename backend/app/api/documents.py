@@ -5,11 +5,96 @@ from datetime import datetime
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 from app.core.firebase_admin import get_current_user_from_auth_header
-from app.core.documentai_client import process_document_bytes
+from app.core.documentai_client import process_document_bytes, DocumentAIError
 from app.core.gemini import summarize_with_gemini
 from app.core.supabase import supabase  # ✅ wrapper we created
 
 router = APIRouter()
+
+
+def _parse_enhanced_response(response_text: str, extracted_text: str) -> tuple[str, dict]:
+    """Parse the enhanced Gemini response to extract summary and metadata"""
+    try:
+        # Split response into summary and metadata sections
+        if "SUMMARY:" in response_text and "METADATA:" in response_text:
+            parts = response_text.split("METADATA:")
+            summary_part = parts[0].replace("SUMMARY:", "").strip()
+            metadata_part = parts[1].strip() if len(parts) > 1 else ""
+            
+            # Extract summary
+            summary = summary_part.strip()
+            
+            # Parse metadata
+            metadata = {}
+            lines = metadata_part.split('\n')
+            for line in lines:
+                line = line.strip()
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    key = key.strip().lower().replace(' ', '')
+                    value = value.strip()
+                    
+                    if key == 'documenttype':
+                        metadata['documentType'] = value
+                    elif key == 'complexity':
+                        metadata['complexity'] = value
+                    elif key == 'risklevel':
+                        metadata['riskLevel'] = value
+                    elif key == 'riskfactors':
+                        if value.lower() == 'none':
+                            metadata['riskFactors'] = []
+                        else:
+                            # Split by comma and clean up
+                            factors = [f.strip() for f in value.split(',')]
+                            metadata['riskFactors'] = factors[:3]  # Limit to 3
+                    elif key == 'keyparties':
+                        if value.lower() == 'none':
+                            metadata['keyParties'] = []
+                        else:
+                            # Split by comma and clean up
+                            parties = [p.strip() for p in value.split(',')]
+                            metadata['keyParties'] = parties[:3]  # Limit to 3
+                    elif key == 'wordcount':
+                        try:
+                            metadata['wordCount'] = int(value)
+                        except:
+                            metadata['wordCount'] = len(extracted_text.split())
+                    elif key == 'pagecount':
+                        metadata['pageCount'] = value
+            
+            # Set defaults for missing fields
+            metadata.setdefault('documentType', None)
+            metadata.setdefault('complexity', None)
+            metadata.setdefault('riskLevel', None)
+            metadata.setdefault('riskFactors', [])
+            metadata.setdefault('keyParties', [])
+            metadata.setdefault('wordCount', len(extracted_text.split()))
+            metadata.setdefault('pageCount', None)
+            
+            return summary, metadata
+        else:
+            # Fallback: treat entire response as summary
+            return response_text.strip(), {
+                'documentType': None,
+                'complexity': None,
+                'riskLevel': None,
+                'riskFactors': [],
+                'keyParties': [],
+                'wordCount': len(extracted_text.split()),
+                'pageCount': None
+            }
+    except Exception as e:
+        print(f"Error parsing enhanced response: {e}")
+        # Fallback: treat entire response as summary
+        return response_text.strip(), {
+            'documentType': None,
+            'complexity': None,
+            'riskLevel': None,
+            'riskFactors': [],
+            'keyParties': [],
+            'wordCount': len(extracted_text.split()),
+            'pageCount': None
+        }
 
 
 # ---------------------------
@@ -40,6 +125,32 @@ def create_document(payload: DocumentCreate, authorization: str | None = Header(
             raise HTTPException(status_code=401, detail="No UID found")
 
         print(f"User UID: {uid}")
+
+        # File size validation
+        max_file_size = 20 * 1024 * 1024  # 20MB
+        if payload.size_bytes > max_file_size:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File size ({payload.size_bytes / (1024*1024):.1f}MB) exceeds the maximum limit of 20MB. Please use a smaller file."
+            )
+        
+        if payload.size_bytes == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="File appears to be empty. Please upload a valid document."
+            )
+
+        # File type validation
+        allowed_types = [
+            "application/pdf",
+            "application/msword", 
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ]
+        if payload.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail="File type not supported. Please upload PDF, DOC, or DOCX files only."
+            )
 
         # ✅ Use the exact path frontend used (don't generate a new one here)
         row = {
@@ -158,32 +269,110 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
             print("Processing with Document AI...")
             result = process_document_bytes(file_bytes)
             print("Document AI processing completed")
+        except DocumentAIError as e:
+            print(f"Document AI error: {e.message}")
+            # Update document status to failed with specific error
+            supabase.table("documents").update({
+                "status": "failed",
+                "error_message": e.user_message,
+                "error_code": e.error_code,
+                "processed_at": datetime.utcnow().isoformat()
+            }).eq("id", doc_id).execute()
+            
+            # Return user-friendly error message
+            raise HTTPException(
+                status_code=400 if e.error_code in ["PAGE_LIMIT_EXCEEDED", "FILE_SIZE_EXCEEDED", "INVALID_DOCUMENT"] else 500,
+                detail=e.user_message
+            )
         except Exception as e:
-            print(f"Document AI error: {e}")
-            raise HTTPException(status_code=500, detail=f"Document AI failed: {e}")
+            print(f"Unexpected Document AI error: {e}")
+            # Update document status to failed
+            supabase.table("documents").update({
+                "status": "failed",
+                "error_message": "Document processing failed due to an unexpected error.",
+                "error_code": "UNKNOWN_ERROR",
+                "processed_at": datetime.utcnow().isoformat()
+            }).eq("id", doc_id).execute()
+            raise HTTPException(status_code=500, detail="Document processing failed. Please try again or contact support.")
 
         # 4. Update DB with extracted text
         extracted_text = result.text
         print(f"Extracted text length: {len(extracted_text)} characters")
         
-        # 5. Summarize with Gemini (Vertex)
+        # 5. Summarize with Gemini (Vertex) - Enhanced with structured data
         try:
-            print("Starting Gemini summarization...")
-            summary = summarize_with_gemini(extracted_text)
+            print("Starting Gemini enhanced analysis...")
+            
+            # Use enhanced prompt that includes structured data request
+            enhanced_prompt = f"""
+You are a legal document analyzer. Analyze this document and provide both a summary and structured metadata.
+
+DOCUMENT ANALYSIS:
+{extracted_text[:120000]}
+
+Please provide your response in this exact format:
+
+SUMMARY:
+[Provide a 2-3 sentence summary of the document]
+
+METADATA:
+Document Type: [Contract/Agreement/Policy/Legal Brief/Court Document/Other]
+Complexity: [Simple/Moderate/Complex]
+Risk Level: [Low/Medium/High]
+Risk Factors: [List up to 3 key risk factors, or "None" if no significant risks]
+Key Parties: [List up to 3 key parties involved, or "None" if not applicable]
+Word Count: {len(extracted_text.split())}
+Page Count: [Estimated based on content length]
+"""
+
+            # Get enhanced response from Gemini
+            enhanced_response = summarize_with_gemini(enhanced_prompt, max_tokens=1200)
+            
+            # Parse the structured response
+            summary, metadata = _parse_enhanced_response(enhanced_response, extracted_text)
+            
             if summary is not None and not summary.strip():
                 print("Gemini returned empty summary")
-                summary = None  # store NULL instead of empty string
+                summary = None
             else:
-                print(f"Gemini summary completed, length: {len(summary) if summary else 0}")
+                print(f"Gemini analysis completed, summary length: {len(summary) if summary else 0}")
+                print(f"Document type: {metadata.get('documentType')}")
+                print(f"Risk level: {metadata.get('riskLevel')}")
+                print(f"Complexity: {metadata.get('complexity')}")
+                
         except Exception as e:
-            print(f"Gemini error: {e}")
-            summary = None  # don't fail the whole request if summary fails
+            print(f"Gemini enhanced analysis error: {e}")
+            # Fallback to original summary
+            try:
+                summary = summarize_with_gemini(extracted_text)
+                metadata = {
+                    'documentType': None,
+                    'complexity': None,
+                    'riskLevel': None,
+                    'riskFactors': [],
+                    'keyParties': [],
+                    'wordCount': len(extracted_text.split()),
+                    'pageCount': None
+                }
+            except Exception as fallback_error:
+                print(f"Fallback summary also failed: {fallback_error}")
+                summary = None
+                metadata = {
+                    'documentType': None,
+                    'complexity': None,
+                    'riskLevel': None,
+                    'riskFactors': [],
+                    'keyParties': [],
+                    'wordCount': len(extracted_text.split()),
+                    'pageCount': None
+                }
 
         print("Updating database with results...")
         supabase.table("documents").update({
             "status": "processed",
             "extracted_text": extracted_text,
             "summary": summary,
+            "document_metadata": metadata,
             "processed_at": datetime.utcnow().isoformat()
         }).eq("id", doc_id).execute()
 

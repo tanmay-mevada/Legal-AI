@@ -17,6 +17,17 @@ interface Document {
   summary?: string;
   processed_at?: string;
   bucket_path?: string;
+  error_code?: string;
+  error_message?: string;
+  document_metadata?: {
+    documentType?: string;
+    complexity?: string;
+    riskLevel?: "Low" | "Medium" | "High";
+    riskFactors?: string[];
+    wordCount?: number;
+    pageCount?: number;
+    keyParties?: string[];
+  };
 }
 
 interface ChatLayoutProps {
