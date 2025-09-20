@@ -1,7 +1,8 @@
--- Add document_metadata column to documents table
+-- Add document_metadata and detailed_explanation columns to documents table
 -- Run this SQL command in your Supabase SQL editor
 
-ALTER TABLE documents ADD COLUMN document_metadata JSONB;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS document_metadata JSONB;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS detailed_explanation TEXT;
 
 -- Add indexes for better query performance
 CREATE INDEX idx_documents_metadata ON documents USING GIN (document_metadata);

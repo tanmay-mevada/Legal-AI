@@ -15,6 +15,7 @@ interface Document {
   created_at: string;
   extracted_text?: string;
   summary?: string;
+  detailed_explanation?: string;
   processed_at?: string;
   bucket_path?: string;
   error_code?: string;

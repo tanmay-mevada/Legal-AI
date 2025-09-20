@@ -1,5 +1,6 @@
 import os
-from typing import Optional
+import json
+from typing import Optional, Dict, Any
 
 import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig
@@ -74,6 +75,39 @@ def _ensure_vertex_init(location: str) -> None:
     vertexai.init(project=_PROJECT_ID, location=location)
 
 
+def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
+    """Parse the Gemini response and extract structured data"""
+    try:
+        # Clean the response text
+        cleaned_text = response_text.strip()
+        if cleaned_text.startswith('```json'):
+            cleaned_text = cleaned_text[7:]
+        if cleaned_text.endswith('```'):
+            cleaned_text = cleaned_text[:-3]
+        
+        # Parse JSON
+        data = json.loads(cleaned_text)
+        
+        return {
+            'document_type': data.get('documentType'),
+            'complexity': data.get('complexity'),
+            'risk_level': data.get('riskLevel'),
+            'risk_factors': data.get('riskFactors', []),
+            'key_parties': data.get('keyParties', []),
+            'summary': data.get('summary'),
+            'extracted_text': data.get('extractedText'),
+            'word_count': data.get('wordCount'),
+            'page_count': data.get('pageCount')
+        }
+    except Exception as e:
+        print(f"Error parsing Gemini response: {e}")
+        # Fallback to original response
+        return {
+            'summary': response_text,
+            'extracted_text': None
+        }
+
+
 def summarize_with_gemini(document_text: str, max_tokens: int = 800) -> str:
     """Summarize extracted document text using Gemini 1.5 Flash on Vertex AI.
 
@@ -141,5 +175,124 @@ def summarize_with_gemini(document_text: str, max_tokens: int = 800) -> str:
     if last_err:
         raise last_err
     return ""
+
+
+def analyze_document_with_gemini(document_text: str, max_tokens: int = 1200) -> Dict[str, Any]:
+    """Analyze document with enhanced structured response using Gemini.
+
+    Args:
+        document_text: Raw extracted text to analyze.
+        max_tokens: Upper bound for response length.
+
+    Returns:
+        A dictionary containing structured analysis data.
+    """
+    if not document_text:
+        return {'summary': '', 'extracted_text': document_text}
+
+    # Try candidates (location x model) until one succeeds
+    last_err: Exception | None = None
+    for loc in _LOCATION_CANDIDATES:
+        try:
+            _ensure_vertex_init(loc)
+        except Exception as e:
+            last_err = e
+            continue
+        for model_name in _MODEL_CANDIDATES:
+            try:
+                model = GenerativeModel(model_name)
+                
+                # Enhanced prompt for structured analysis
+                prompt = f"""
+Analyze this legal document and provide a structured response in the following JSON format:
+
+{{
+  "documentType": "Contract/Agreement/Policy/Legal Brief/Court Document/Other",
+  "complexity": "Simple/Moderate/Complex",
+  "riskLevel": "Low/Medium/High",
+  "riskFactors": ["Risk factor 1", "Risk factor 2", "Risk factor 3"],
+  "keyParties": ["Party 1", "Party 2", "Party 3"],
+  "summary": "2-3 sentence overview of the document",
+  "extractedText": "{document_text[:120000]}",
+  "wordCount": {len(document_text.split())},
+  "pageCount": "Estimated based on content length"
+}}
+
+Document to analyze:
+{document_text[:120000]}
+
+Please analyze this document and return ONLY the JSON response. Do not include any other text or explanations.
+"""
+
+                resp = model.generate_content(
+                    prompt,
+                    generation_config=GenerationConfig(
+                        temperature=0.2,
+                        max_output_tokens=max_tokens,
+                    ),
+                )
+
+                # Try multiple response shapes depending on SDK version
+                text = getattr(resp, "text", None)
+                if text and text.strip():
+                    return _parse_gemini_response(text.strip())
+
+                try:
+                    candidates = getattr(resp, "candidates", None) or []
+                    for c in candidates:
+                        content = getattr(c, "content", None)
+                        if not content:
+                            continue
+                        parts = getattr(content, "parts", None) or []
+                        chunk = "".join([getattr(p, "text", "") for p in parts])
+                        if chunk.strip():
+                            return _parse_gemini_response(chunk.strip())
+                except Exception:
+                    pass
+            except Exception as e:
+                last_err = e
+                continue
+
+    # Exhausted attempts - fallback to original summary
+    if last_err:
+        print(f"Enhanced analysis failed: {last_err}")
+        # Fallback to original summary
+        try:
+            summary = summarize_with_gemini(document_text, max_tokens)
+            return {
+                'summary': summary,
+                'extracted_text': document_text,
+                'document_type': None,
+                'complexity': None,
+                'risk_level': None,
+                'risk_factors': [],
+                'key_parties': [],
+                'word_count': len(document_text.split()),
+                'page_count': None
+            }
+        except Exception:
+            return {
+                'summary': '',
+                'extracted_text': document_text,
+                'document_type': None,
+                'complexity': None,
+                'risk_level': None,
+                'risk_factors': [],
+                'key_parties': [],
+                'word_count': len(document_text.split()),
+                'page_count': None
+            }
+    
+    return {
+        'summary': '',
+        'extracted_text': document_text,
+        'document_type': None,
+        'complexity': None,
+        'risk_level': None,
+        'risk_factors': [],
+        'key_parties': [],
+        'word_count': len(document_text.split()),
+        'page_count': None
+    }
 
 

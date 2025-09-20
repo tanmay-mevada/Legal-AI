@@ -104,49 +104,63 @@ export default function MessageBubble({
                   />
                 )}
                 
-                {/* Risk Warning Bar - only show if risk level exists and no error */}
-                {!errorCode && documentMetadata?.riskLevel && (
-                  <RiskWarningBar 
-                    riskLevel={documentMetadata.riskLevel}
-                    riskFactors={documentMetadata.riskFactors}
-                  />
-                )}
-                
-                {/* Document Metadata - only show for summary content type and no error */}
-                {!errorCode && contentType === "summary" && documentMetadata && (
-                  <DocumentMetadata
-                    documentType={documentMetadata.documentType}
-                    complexity={documentMetadata.complexity}
-                    wordCount={documentMetadata.wordCount}
-                    pageCount={documentMetadata.pageCount}
-                    keyParties={documentMetadata.keyParties}
-                  />
-                )}
-                
-                {/* Content - only show if no error */}
-                {!errorCode && (
+                {/* Risk Warning Bar and Document Metadata - only show for metadata-only content type */}
+                {!errorCode && contentType === "metadata-only" && (
                   <>
-                    {contentType === "extracted-text" ? (
-                      <ExpandableContent
-                        title="Extracted Text"
-                        content={content}
-                        defaultExpanded={false}
-                        maxPreviewLength={300}
+                    {documentMetadata?.riskLevel && (
+                      <RiskWarningBar 
+                        riskLevel={documentMetadata.riskLevel}
+                        riskFactors={documentMetadata.riskFactors}
                       />
-                    ) : contentType === "summary" ? (
-                      <ExpandableContent
-                        title="AI Summary"
-                        content={content}
-                        defaultExpanded={true}
-                        maxPreviewLength={200}
+                    )}
+                    {documentMetadata && (
+                      <DocumentMetadata
+                        documentType={documentMetadata.documentType}
+                        complexity={documentMetadata.complexity}
+                        wordCount={documentMetadata.wordCount}
+                        pageCount={documentMetadata.pageCount}
+                        keyParties={documentMetadata.keyParties}
                       />
-                    ) : (
-                      <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown>{content}</ReactMarkdown>
-                      </div>
                     )}
                   </>
                 )}
+                
+                {/* Content - only show if no error */}
+    {!errorCode && (
+      <>
+        {contentType === "metadata-only" ? (
+          // Only show risk warnings and document metadata, no content
+          <div className="space-y-3">
+            {/* Risk warning and metadata are already rendered above */}
+          </div>
+        ) : contentType === "extracted-text" ? (
+          <ExpandableContent
+            title="Extracted Text"
+            content={content}
+            defaultExpanded={false}
+            maxPreviewLength={300}
+          />
+        ) : contentType === "detailed-explanation" ? (
+          <ExpandableContent
+            title="Detailed Analysis"
+            content={content}
+            defaultExpanded={true}
+            maxPreviewLength={250}
+          />
+        ) : contentType === "summary" ? (
+          <ExpandableContent
+            title="AI Summary"
+            content={content}
+            defaultExpanded={true}
+            maxPreviewLength={200}
+          />
+        ) : (
+          <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        )}
+      </>
+    )}
               </div>
             )}
           </div>
