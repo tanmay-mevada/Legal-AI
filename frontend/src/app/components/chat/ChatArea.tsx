@@ -13,6 +13,7 @@ interface Document {
   created_at: string;
   extracted_text?: string;
   summary?: string;
+  detailed_explanation?: string;
   processed_at?: string;
   error_code?: string;
   error_message?: string;
@@ -102,6 +103,21 @@ export default function ChatArea({
 
     // AI responses (if processed)
     if (selectedDocument.status === 'processed') {
+      // 1. Risk warnings and document metadata (at the top)
+      if (selectedDocument.document_metadata && (selectedDocument.document_metadata.riskLevel || selectedDocument.document_metadata.documentType)) {
+        messages.push(
+          <MessageBubble
+            key="metadata"
+            type="assistant"
+            content=""
+            timestamp={selectedDocument.processed_at}
+            contentType="metadata-only"
+            documentMetadata={selectedDocument.document_metadata}
+          />
+        );
+      }
+
+      // 2. Extracted text (collapsed by default)
       if (selectedDocument.extracted_text) {
         messages.push(
           <MessageBubble
@@ -115,6 +131,21 @@ export default function ChatArea({
         );
       }
 
+      // 3. Detailed analysis (expanded by default)
+      if (selectedDocument.detailed_explanation) {
+        messages.push(
+          <MessageBubble
+            key="detailed-explanation"
+            type="assistant"
+            content={selectedDocument.detailed_explanation}
+            timestamp={selectedDocument.processed_at}
+            contentType="detailed-explanation"
+            documentMetadata={selectedDocument.document_metadata}
+          />
+        );
+      }
+
+      // 4. Summary (expanded by default)
       if (selectedDocument.summary) {
         messages.push(
           <MessageBubble

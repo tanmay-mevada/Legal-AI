@@ -12,20 +12,41 @@ from app.core.supabase import supabase  # ✅ wrapper we created
 router = APIRouter()
 
 
-def _parse_enhanced_response(response_text: str, extracted_text: str) -> tuple[str, dict]:
-    """Parse the enhanced Gemini response to extract summary and metadata"""
+def _parse_enhanced_response(response_text: str, extracted_text: str) -> tuple[str, str, dict]:
+    """Parse the enhanced Gemini response to extract detailed explanation, summary and metadata"""
     try:
-        # Split response into summary and metadata sections
-        if "SUMMARY:" in response_text and "METADATA:" in response_text:
+        # Split response into sections
+        if "DETAILED EXPLANATION:" in response_text and "SUMMARY:" in response_text and "METADATA:" in response_text:
+            # Split by sections
+            parts = response_text.split("SUMMARY:")
+            detailed_part = parts[0].replace("DETAILED EXPLANATION:", "").strip()
+            
+            remaining = parts[1] if len(parts) > 1 else ""
+            summary_metadata_parts = remaining.split("METADATA:")
+            summary_part = summary_metadata_parts[0].strip()
+            metadata_part = summary_metadata_parts[1].strip() if len(summary_metadata_parts) > 1 else ""
+            
+            # Extract detailed explanation and summary
+            detailed_explanation = detailed_part.strip()
+            summary = summary_part.strip()
+        elif "SUMMARY:" in response_text and "METADATA:" in response_text:
+            # Fallback for old format (without detailed explanation)
             parts = response_text.split("METADATA:")
             summary_part = parts[0].replace("SUMMARY:", "").strip()
             metadata_part = parts[1].strip() if len(parts) > 1 else ""
             
-            # Extract summary
+            # Extract summary (no detailed explanation)
+            detailed_explanation = ""
             summary = summary_part.strip()
-            
-            # Parse metadata
-            metadata = {}
+        else:
+            # Fallback: treat entire response as summary
+            detailed_explanation = ""
+            summary = response_text.strip()
+            metadata_part = ""
+        
+        # Parse metadata
+        metadata = {}
+        if metadata_part:
             lines = metadata_part.split('\n')
             for line in lines:
                 line = line.strip()
@@ -61,32 +82,21 @@ def _parse_enhanced_response(response_text: str, extracted_text: str) -> tuple[s
                             metadata['wordCount'] = len(extracted_text.split())
                     elif key == 'pagecount':
                         metadata['pageCount'] = value
-            
-            # Set defaults for missing fields
-            metadata.setdefault('documentType', None)
-            metadata.setdefault('complexity', None)
-            metadata.setdefault('riskLevel', None)
-            metadata.setdefault('riskFactors', [])
-            metadata.setdefault('keyParties', [])
-            metadata.setdefault('wordCount', len(extracted_text.split()))
-            metadata.setdefault('pageCount', None)
-            
-            return summary, metadata
-        else:
-            # Fallback: treat entire response as summary
-            return response_text.strip(), {
-                'documentType': None,
-                'complexity': None,
-                'riskLevel': None,
-                'riskFactors': [],
-                'keyParties': [],
-                'wordCount': len(extracted_text.split()),
-                'pageCount': None
-            }
+        
+        # Set defaults for missing fields
+        metadata.setdefault('documentType', None)
+        metadata.setdefault('complexity', None)
+        metadata.setdefault('riskLevel', None)
+        metadata.setdefault('riskFactors', [])
+        metadata.setdefault('keyParties', [])
+        metadata.setdefault('wordCount', len(extracted_text.split()))
+        metadata.setdefault('pageCount', None)
+        
+        return detailed_explanation, summary, metadata
     except Exception as e:
         print(f"Error parsing enhanced response: {e}")
         # Fallback: treat entire response as summary
-        return response_text.strip(), {
+        return "", response_text.strip(), {
             'documentType': None,
             'complexity': None,
             'riskLevel': None,
@@ -305,15 +315,24 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
             
             # Use enhanced prompt that includes structured data request
             enhanced_prompt = f"""
-You are a legal document analyzer. Analyze this document and provide both a summary and structured metadata.
+You are a legal document analyzer. Analyze this document and provide a detailed explanation, summary, and structured metadata.
 
 DOCUMENT ANALYSIS:
 {extracted_text[:120000]}
 
 Please provide your response in this exact format:
 
+DETAILED EXPLANATION:
+[Provide a comprehensive 5-7 bullet point analysis covering:
+- Executive summary of the document
+- Key obligations and responsibilities
+- Important terms and conditions
+- Potential risks and red flags
+- Termination/renewal/penalty clauses (if present)
+- Any other critical information]
+
 SUMMARY:
-[Provide a 2-3 sentence summary of the document]
+[Provide a concise 2-3 sentence summary of the document]
 
 METADATA:
 Document Type: [Contract/Agreement/Policy/Legal Brief/Court Document/Other]
@@ -329,13 +348,14 @@ Page Count: [Estimated based on content length]
             enhanced_response = summarize_with_gemini(enhanced_prompt, max_tokens=1200)
             
             # Parse the structured response
-            summary, metadata = _parse_enhanced_response(enhanced_response, extracted_text)
+            detailed_explanation, summary, metadata = _parse_enhanced_response(enhanced_response, extracted_text)
             
             if summary is not None and not summary.strip():
                 print("Gemini returned empty summary")
                 summary = None
             else:
                 print(f"Gemini analysis completed, summary length: {len(summary) if summary else 0}")
+                print(f"Detailed explanation length: {len(detailed_explanation) if detailed_explanation else 0}")
                 print(f"Document type: {metadata.get('documentType')}")
                 print(f"Risk level: {metadata.get('riskLevel')}")
                 print(f"Complexity: {metadata.get('complexity')}")
@@ -345,6 +365,7 @@ Page Count: [Estimated based on content length]
             # Fallback to original summary
             try:
                 summary = summarize_with_gemini(extracted_text)
+                detailed_explanation = ""
                 metadata = {
                     'documentType': None,
                     'complexity': None,
@@ -357,6 +378,7 @@ Page Count: [Estimated based on content length]
             except Exception as fallback_error:
                 print(f"Fallback summary also failed: {fallback_error}")
                 summary = None
+                detailed_explanation = ""
                 metadata = {
                     'documentType': None,
                     'complexity': None,
@@ -372,6 +394,7 @@ Page Count: [Estimated based on content length]
             "status": "processed",
             "extracted_text": extracted_text,
             "summary": summary,
+            "detailed_explanation": detailed_explanation,
             "document_metadata": metadata,
             "processed_at": datetime.utcnow().isoformat()
         }).eq("id", doc_id).execute()
@@ -380,7 +403,8 @@ Page Count: [Estimated based on content length]
         return {
             "message": "Processing complete",
             "extracted_text": extracted_text,
-            "summary": (summary or "")
+            "summary": (summary or ""),
+            "detailed_explanation": (detailed_explanation or "")
         }
     except HTTPException:
         # Re-raise HTTP exceptions as-is
