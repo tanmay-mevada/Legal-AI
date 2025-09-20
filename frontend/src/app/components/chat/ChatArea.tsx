@@ -101,63 +101,21 @@ export default function ChatArea({
       );
     }
 
-    // AI responses (if processed)
+    // AI response (if processed) - Single consolidated response
     if (selectedDocument.status === 'processed') {
-      // 1. Risk warnings and document metadata (at the top)
-      if (selectedDocument.document_metadata && (selectedDocument.document_metadata.riskLevel || selectedDocument.document_metadata.documentType)) {
-        messages.push(
-          <MessageBubble
-            key="metadata"
-            type="assistant"
-            content=""
-            timestamp={selectedDocument.processed_at}
-            contentType="metadata-only"
-            documentMetadata={selectedDocument.document_metadata}
-          />
-        );
-      }
-
-      // 2. Extracted text (collapsed by default)
-      if (selectedDocument.extracted_text) {
-        messages.push(
-          <MessageBubble
-            key="extracted-text"
-            type="assistant"
-            content={selectedDocument.extracted_text}
-            timestamp={selectedDocument.processed_at}
-            contentType="extracted-text"
-            documentMetadata={selectedDocument.document_metadata}
-          />
-        );
-      }
-
-      // 3. Detailed analysis (expanded by default)
-      if (selectedDocument.detailed_explanation) {
-        messages.push(
-          <MessageBubble
-            key="detailed-explanation"
-            type="assistant"
-            content={selectedDocument.detailed_explanation}
-            timestamp={selectedDocument.processed_at}
-            contentType="detailed-explanation"
-            documentMetadata={selectedDocument.document_metadata}
-          />
-        );
-      }
-
-      // 4. Summary (expanded by default)
-      if (selectedDocument.summary) {
-        messages.push(
-          <MessageBubble
-            key="summary"
-            type="assistant"
-            content={selectedDocument.summary}
-            timestamp={selectedDocument.processed_at}
-            contentType="summary"
-            documentMetadata={selectedDocument.document_metadata}
-          />
-        );
-      }
+      messages.push(
+        <MessageBubble
+          key="ai-analysis"
+          type="assistant"
+          content=""
+          timestamp={selectedDocument.processed_at}
+          contentType="consolidated-analysis"
+          documentMetadata={selectedDocument.document_metadata}
+          extractedText={selectedDocument.extracted_text}
+          detailedExplanation={selectedDocument.detailed_explanation}
+          summary={selectedDocument.summary}
+        />
+      );
     }
 
     // Error message (if failed)
