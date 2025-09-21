@@ -44,7 +44,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
         }
         const token = await user.getIdToken();
         // Find document by bucket_path
-        const docRes = await fetch(`http://127.0.0.1:8000/api/documents/`, {
+  const docRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,7 +69,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
         } else {
           setStatus("File exists but not processed. Processing now...");
           // Trigger processing
-          const processRes = await fetch(`http://127.0.0.1:8000/api/documents/${found.id}/process`, {
+          const processRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${found.id}/process`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -102,7 +102,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
-    const res = await fetch("http://127.0.0.1:8000/api/documents/", {
+  const res = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/documents/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

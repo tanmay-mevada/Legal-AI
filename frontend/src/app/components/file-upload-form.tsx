@@ -42,7 +42,7 @@ export default function FileUploadForm({ onSummary }: FileUploadFormProps) {
     // 2. Start processing the document
     try {
       const token = await auth.currentUser?.getIdToken();
-      const processRes = await fetch(`http://127.0.0.1:8000/api/documents/${dbId}/process`, {
+  const processRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${dbId}/process`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +67,7 @@ export default function FileUploadForm({ onSummary }: FileUploadFormProps) {
       let tries = 0;
       while (!done && tries < 60) {
         const token = await auth.currentUser?.getIdToken();
-        const resp = await fetch(`http://127.0.0.1:8000/api/documents/${dbId}`, {
+  const resp = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${dbId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

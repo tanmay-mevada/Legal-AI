@@ -25,7 +25,7 @@ export default function ProcessButton({ docId, onProcessed, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
-    const res = await fetch(`http://127.0.0.1:8000/api/documents/${docId}/process`, {
+  const res = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${docId}/process`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
