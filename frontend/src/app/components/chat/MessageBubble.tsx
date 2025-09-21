@@ -110,6 +110,9 @@ const formatDetailedExplanation = (content: string) => {
   }).filter(Boolean);
 };
 
+const x = formatDetailedExplanation;
+console.log(x);
+
 export default function MessageBubble({
   type,
   content,

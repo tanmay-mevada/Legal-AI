@@ -71,12 +71,12 @@ export default function Sidebar({
   };
 
   return (
-    <div className="flex h-full flex-col">
+  <div className="flex flex-col h-full overflow-hidden rounded-lg">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-              <FileText className="h-4 w-4" />
+            <div className="flex items-center justify-center w-8 h-8 text-white bg-blue-600 rounded-lg">
+              <FileText className="w-4 h-4" />
             </div>
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               Legal AI
@@ -85,9 +85,9 @@ export default function Sidebar({
           <Button
             onClick={onNewUpload}
             size="sm"
-            className="h-8 w-8 rounded-full p-0"
+            className="w-8 h-8 p-0 rounded-full"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
 
@@ -96,14 +96,14 @@ export default function Sidebar({
       {/* User Info */}
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-            <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+          <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-full dark:bg-gray-700">
+            <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
               {user.displayName || user.email}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <p className="text-xs text-gray-500 truncate dark:text-gray-400">
               {user.email}
             </p>
           </div>
@@ -111,10 +111,10 @@ export default function Sidebar({
             onClick={() => signOut(auth)}
             size="sm"
             variant="ghost"
-            className="h-8 w-8 rounded-full p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="w-8 h-8 p-0 text-gray-500 rounded-full hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             title="Logout"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -122,21 +122,21 @@ export default function Sidebar({
       <Separator />
 
       {/* Documents List */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex flex-col flex-1 min-h-0">
         <div className="p-4 pb-2">
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+          <h2 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
             Documents
           </h2>
         </div>
-        <ScrollArea className="flex-1 px-4 pb-4">
+  <ScrollArea className="flex-1 px-4 pb-4 overflow-hidden rounded-lg">
           <div className="space-y-1">
             {documents.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <div className="py-8 text-center">
+                <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   No documents yet
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   Upload your first document to get started
                 </p>
               </div>
@@ -153,10 +153,10 @@ export default function Sidebar({
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      <FileText className="h-4 w-4 text-gray-500" />
+                      <FileText className="w-4 h-4 text-gray-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
                         {doc.file_name}
                       </p>
                       <div className="flex items-center gap-2 mt-1">

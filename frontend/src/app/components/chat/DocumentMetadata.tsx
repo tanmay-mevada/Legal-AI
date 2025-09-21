@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FileText, Calendar, Users, Clock, Tag } from "lucide-react";
+import { FileText, Calendar, Users, Clock, Tag, ScrollText, Signature, Scale, WholeWord } from "lucide-react";
 
 interface DocumentMetadataProps {
   documentType?: string;
@@ -37,32 +37,35 @@ export default function DocumentMetadata({
     switch (type?.toLowerCase()) {
       case "contract":
       case "agreement":
-        return "📄";
+        return <Signature className="w-3 h-3 text-gray-500" />;
       case "policy":
-        return "📋";
+        return <Tag className="w-3 h-3 text-gray-500" />;
       case "legal brief":
+        return <Scale className="w-3 h-3 text-gray-500" />;
       case "memo":
-        return "📝";
+        return <Calendar className="w-3 h-3 text-gray-500" />;
       case "court document":
-        return "⚖️";
+        return <Users className="w-3 h-3 text-gray-500" />;
       default:
-        return "📄";
+        return <ScrollText className="w-3 h-3 text-gray-500" />;
     }
   };
 
   return (
-    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+    <div className="p-4 mb-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
       <div className="flex items-center gap-2 mb-3">
-        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-100">
+        <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
           Document Analysis
         </h4>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+        
         {documentType && (
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{getDocumentTypeIcon(documentType)}</span>
+          
+          <div className="flex items-center w-3 h-3 gap-2 text-gray-500">
+            <span className="w-3 h-3 gap-2 text-gray-500">{getDocumentTypeIcon(documentType)}</span>
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Type:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">{documentType}</span>
@@ -72,7 +75,7 @@ export default function DocumentMetadata({
         
         {complexity && (
           <div className="flex items-center gap-2">
-            <Tag className="h-3 w-3 text-gray-500" />
+            <Tag className="w-3 h-3 text-gray-500" />
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Complexity:</span>
               <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${getComplexityColor(complexity)}`}>
@@ -84,7 +87,7 @@ export default function DocumentMetadata({
         
         {wordCount && (
           <div className="flex items-center gap-2">
-            <FileText className="h-3 w-3 text-gray-500" />
+            <WholeWord className="w-3 h-3 text-gray-500" />
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Words:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">{wordCount.toLocaleString()}</span>
@@ -94,7 +97,7 @@ export default function DocumentMetadata({
         
         {pageCount && (
           <div className="flex items-center gap-2">
-            <FileText className="h-3 w-3 text-gray-500" />
+            <FileText className="w-3 h-3 text-gray-500" />
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Pages:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">{pageCount}</span>
@@ -104,7 +107,7 @@ export default function DocumentMetadata({
         
         {processingTime && (
           <div className="flex items-center gap-2">
-            <Clock className="h-3 w-3 text-gray-500" />
+            <Clock className="w-3 h-3 text-gray-500" />
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">Processed:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">{processingTime}</span>
@@ -114,22 +117,22 @@ export default function DocumentMetadata({
       </div>
       
       {keyParties && keyParties.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+        <div className="pt-3 mt-3 border-t border-blue-200 dark:border-blue-700">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="h-3 w-3 text-gray-500" />
-            <span className="font-medium text-xs text-gray-700 dark:text-gray-300">Key Parties:</span>
+            <Users className="w-3 h-3 text-gray-500" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Key Parties:</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {keyParties.slice(0, 3).map((party, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-xs"
+                className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full dark:bg-blue-800 dark:text-blue-200"
               >
                 {party}
               </span>
             ))}
             {keyParties.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+              <span className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-400">
                 +{keyParties.length - 3} more
               </span>
             )}
