@@ -1,5 +1,4 @@
 
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +14,7 @@ import "./globals.css";
 import { ThemeProvider } from "./theme/ThemeProvider";
 
 export const metadata = {
-  title: 'Legal AI',
+  title: 'TautologyAI',
   description: 'AI-powered legal document analysis',
 };
 

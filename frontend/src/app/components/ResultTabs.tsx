@@ -100,7 +100,7 @@ export default function ResultTabs({ extractedText, summary }: Props) {
         <span>
           {tab === "summary" ? "Summary" : "Extracted"} length: {textForTab.length.toLocaleString()} chars
         </span>
-        <span className="opacity-80">Legal AI</span>
+  <span className="opacity-80">TautologyAI</span>
       </div>
     </div>
   );
