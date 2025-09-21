@@ -79,7 +79,7 @@ export default function Sidebar({
               <FileText className="w-4 h-4" />
             </div>
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Legal AI
+              TautologyAI
             </h1>
           </div>
           <Button
@@ -128,7 +128,7 @@ export default function Sidebar({
             Documents
           </h2>
         </div>
-  <ScrollArea className="flex-1 px-4 pb-4 overflow-hidden rounded-lg">
+  <ScrollArea className="flex-1 px-4 text-gray-800 rounded-lg overflow--hidden pb-4-gray">
           <div className="space-y-1">
             {documents.length === 0 ? (
               <div className="py-8 text-center">

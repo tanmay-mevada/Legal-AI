@@ -60,7 +60,7 @@ export default function HomePage() {
               <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-semibold text-slate-900">Legal AI</h1>
+              <h1 className="text-base sm:text-lg font-semibold text-slate-900">TautologyAI</h1>
               <p className="text-xs text-slate-600">Secure document insights</p>
             </div>
           </div>

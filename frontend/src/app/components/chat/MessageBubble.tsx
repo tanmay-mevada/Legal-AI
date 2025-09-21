@@ -85,12 +85,12 @@ const formatDetailedExplanation = (content: string) => {
       
       return (
         <div key={index} className={cn("rounded-lg border p-4 mb-3", sectionClasses)}>
-          {/* <div className="flex items-center gap-2 mb-2">
-            {icon}
-              <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4>
-          </div> */}
-      <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
-        <ReactMarkdown>{`\n${cleanContent}`}</ReactMarkdown>
+          <div className="flex items-center gap-2 mb-2">
+            {/* {icon}
+            <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4> */}
+          </div>
+          <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
+            <ReactMarkdown>{`\n${cleanContent}`}</ReactMarkdown>
           </div>
         </div>
       );
@@ -219,7 +219,7 @@ export default function MessageBubble({
 
                         {/* Enhanced Detailed Analysis */}
                         {detailedExplanation && (
-                          <div className="space-y-3">
+                          <div className="px-4 py-3 space-y-2 border-l-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-slate-800 dark:border-blue-400">
                             <div className="flex items-center gap-2 mb-3">
                               <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                               <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300">Detailed Analysis</h3>

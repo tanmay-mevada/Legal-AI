@@ -64,7 +64,7 @@ export default function ChatArea({
               </svg>
             </div>
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Welcome to Legal AI
+              Welcome to TautologyAI
             </h2>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Upload a legal document to get an AI-powered summary and analysis. 
@@ -139,7 +139,7 @@ export default function ChatArea({
     <div className="flex flex-col h-full">
       {/* Header */}
       <MobileHeader
-        title={selectedDocument ? selectedDocument.file_name : "Legal AI Chat"}
+  title={selectedDocument ? selectedDocument.file_name : "TautologyAI Chat"}
         subtitle={selectedDocument ? `Uploaded ${new Date(selectedDocument.created_at).toLocaleDateString()}` : undefined}
         onNewChat={onNewChat}
         showNewChatButton={true}
