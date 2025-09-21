@@ -53,7 +53,7 @@ export default function ExpandableContent({
         )}
       </div>
       
-      <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
+      <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert text-gray-900 dark:text-gray-100">
         <ReactMarkdown>{displayContent}</ReactMarkdown>
       </div>
       

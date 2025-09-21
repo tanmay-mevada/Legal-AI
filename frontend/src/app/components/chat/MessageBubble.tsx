@@ -34,84 +34,78 @@ interface MessageBubbleProps {
 
 // Helper function to parse and format detailed explanation
 const formatDetailedExplanation = (content: string) => {
-  // Split content by section markers (***) and (**) 
-  const sections = content.split(/\*\*\*/).filter(Boolean);
+  // First try to split by *** markers, if that doesn't work, try ** markers
+  let sections = content.split(/\*\*\*/).filter(Boolean);
+  
+  if (sections.length <= 1) {
+    // If no *** markers found, try splitting by ** at the start of lines
+    sections = content.split(/\n\s*\*\*(?!\*)/).filter(Boolean);
+  }
   
   return sections.map((section, index) => {
     const trimmedSection = section.trim();
     if (!trimmedSection) return null;
 
-    const titleMatch = trimmedSection.match(/^([^*]+?)\*\*\s*([\s\S]*)$/);
-    
-    if (titleMatch) {
-      const [, title, content] = titleMatch;
-      const cleanTitle = title.replace(/^\*+/, '').trim();
-      const cleanContent = content.trim();
+      // Remove leading '**' from section titles and avoid duplicate titles
+        const cleanedSection = trimmedSection.replace(/^\*+\s*/, '');
+        let titleMatch = cleanedSection.match(/^\s*([^*\n]+?)\*\*\s*([\s\S]*)$/);
+
+      if (!titleMatch) {
+        // Try alternative pattern for titles
+        titleMatch = trimmedSection.match(/^\*{0,2}\s*([^:\n]+):\s*([\s\S]*)$/);
+      }
+
+      if (titleMatch) {
+        const [, title, content] = titleMatch;
+          const cleanTitle = title.replace(/^\*+/, '').trim();
+          const cleanContent = content.replace(/^\*+/, '').trim();
       
-      // Determine icon based on section title
+      // Determine icon and styling based on section title
       let icon;
-      let bgColor;
-      let borderColor;
-      let textColor;
+      let sectionClasses;
       
       if (cleanTitle.toLowerCase().includes('executive summary')) {
-        icon = <Info className="w-4 h-4" />;
-        bgColor = 'bg-blue-50 dark:bg-blue-900/20';
-        borderColor = 'border-blue-200 dark:border-blue-700';
-        textColor = 'text-blue-800 dark:text-blue-200';
+        sectionClasses = 'bg-blue-50 border-blue-200 dark:bg-blue-900 dark:border-blue-600';
       } else if (cleanTitle.toLowerCase().includes('risk') || cleanTitle.toLowerCase().includes('red flag')) {
-        icon = <AlertTriangle className="w-4 h-4" />;
-        bgColor = 'bg-red-50 dark:bg-red-900/20';
-        borderColor = 'border-red-200 dark:border-red-700';
-        textColor = 'text-red-800 dark:text-red-200';
+        icon = <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />;
+        sectionClasses = 'bg-red-50 border-red-200 dark:bg-red-900 dark:border-red-600';
       } else if (cleanTitle.toLowerCase().includes('obligation') || cleanTitle.toLowerCase().includes('responsibilit')) {
-        icon = <CheckCircle className="w-4 h-4" />;
-        bgColor = 'bg-green-50 dark:bg-green-900/20';
-        borderColor = 'border-green-200 dark:border-green-700';
-        textColor = 'text-green-800 dark:text-green-200';
+        icon = <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />;
+        sectionClasses = 'bg-green-50 border-green-200 dark:bg-green-900 dark:border-green-600';
       } else if (cleanTitle.toLowerCase().includes('termination') || cleanTitle.toLowerCase().includes('penalty')) {
-        icon = <XCircle className="w-4 h-4" />;
-        bgColor = 'bg-orange-50 dark:bg-orange-900/20';
-        borderColor = 'border-orange-200 dark:border-orange-700';
-        textColor = 'text-orange-800 dark:text-orange-200';
+        icon = <XCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />;
+        sectionClasses = 'bg-orange-50 border-orange-200 dark:bg-orange-900 dark:border-orange-600';
       } else if (cleanTitle.toLowerCase().includes('terms') || cleanTitle.toLowerCase().includes('condition')) {
-        icon = <FileText className="w-4 h-4" />;
-        bgColor = 'bg-purple-50 dark:bg-purple-900/20';
-        borderColor = 'border-purple-200 dark:border-purple-700';
-        textColor = 'text-purple-800 dark:text-purple-200';
+        icon = <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
+        sectionClasses = 'bg-purple-50 border-purple-200 dark:bg-purple-900 dark:border-purple-600';
       } else {
-        icon = <Clock className="w-4 h-4" />;
-        bgColor = 'bg-gray-50 dark:bg-gray-800/50';
-        borderColor = 'border-gray-200 dark:border-gray-600';
-        textColor = 'text-gray-800 dark:text-gray-200';
+        icon = <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400" />;
+        sectionClasses = 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-600';
       }
       
       return (
-        <div key={index} className={cn("rounded-lg border p-4 mb-3", bgColor, borderColor)}>
-          <div className={cn("flex items-center gap-2 mb-2", textColor)}>
+        <div key={index} className={cn("rounded-lg border p-4 mb-3", sectionClasses)}>
+          {/* <div className="flex items-center gap-2 mb-2">
             {icon}
-            <h4 className="text-sm font-semibold">{cleanTitle}</h4>
-          </div>
-          <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-            {cleanContent}
+              <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4>
+          </div> */}
+      <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
+        <ReactMarkdown>{`\n${cleanContent}`}</ReactMarkdown>
           </div>
         </div>
       );
     }
     
-    // If no title pattern found, treat as regular content
+    // If no title pattern found, treat as regular content with better contrast
     return (
-      <div key={index} className="p-4 mb-3 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800/50 dark:border-gray-600">
-        <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-          {trimmedSection}
+      <div key={index} className="p-4 mb-3 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-600">
+        <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
+            <ReactMarkdown>{cleanedSection}</ReactMarkdown>
         </div>
       </div>
     );
   }).filter(Boolean);
 };
-
-const x = formatDetailedExplanation;
-console.log(x);
 
 export default function MessageBubble({
   type,
@@ -224,21 +218,24 @@ export default function MessageBubble({
                         )}
 
                         {/* Enhanced Detailed Analysis */}
-                        {detailedExplanation && 
-                          <div className="px-4 py-3 space-y-2 border-l-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-gray-900/40">
-                            <h3 className="mb-2 text-base font-bold text-blue-700 dark:text-blue-300">Detailed Analysis</h3>
-                            <div className="prose-sm prose max-w-none dark:prose-invert">
-                              <ReactMarkdown>{detailedExplanation}</ReactMarkdown>
+                        {detailedExplanation && (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300">Detailed Analysis</h3>
+                            </div>
+                            <div className="space-y-3">
+                              {formatDetailedExplanation(detailedExplanation)}
                             </div>
                           </div>
-                        }
+                        )}
 
                         {/* Summary */}
                         {summary && (
-                          <div className="px-4 py-3 space-y-2 border-r-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-gray-900/30">
+                          <div className="px-4 py-3 space-y-2 border-r-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-slate-800 dark:border-blue-400">
                             <h3 className="mb-2 text-base font-bold text-blue-700 dark:text-blue-300">Executive Summary</h3>
-                            <div className="prose-sm prose max-w-none dark:prose-invert">
-                              <ReactMarkdown>{summary}</ReactMarkdown>
+                            <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
+                              <ReactMarkdown>{summary.replace(/^\*+/, '')}</ReactMarkdown>
                             </div>
                           </div>
                         )}

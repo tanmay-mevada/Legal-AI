@@ -49,7 +49,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
   const fetchDocuments = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
-      const response = await fetch("http://127.0.0.1:8000/api/documents/", {
+  const response = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/documents/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,7 +81,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
         if (uploadError.message && uploadError.message.includes("already exists")) {
           // Find document by bucket_path
           const token = await auth.currentUser?.getIdToken();
-          const response = await fetch("http://127.0.0.1:8000/api/documents/", {
+          const response = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/documents/", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -103,7 +103,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
             return;
           } else {
             // Start processing
-            const processResponse = await fetch(`http://127.0.0.1:8000/api/documents/${found.id}/process`, {
+            const processResponse = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${found.id}/process`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -129,7 +129,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
 
       // Create document metadata
       const token = await auth.currentUser?.getIdToken();
-      const response = await fetch("http://127.0.0.1:8000/api/documents/", {
+  const response = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/documents/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -155,7 +155,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
       setSelectedDocumentId(document.id);
 
       // Start processing
-      const processResponse = await fetch(`http://127.0.0.1:8000/api/documents/${document.id}/process`, {
+  const processResponse = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${document.id}/process`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -186,7 +186,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
     const poll = async () => {
       try {
         const token = await auth.currentUser?.getIdToken();
-        const response = await fetch(`http://127.0.0.1:8000/api/documents/${documentId}`, {
+  const response = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${documentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
