@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       const token = await currentUser.getIdToken();
       
       // Fetch users from backend API
-      const response = await fetch("http://localhost:8000/api/admin/users", {
+  const response = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/admin/users", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gradient mb-2">Admin Dashboard</h1>
+        <h1 className="mb-2 text-4xl font-bold text-gradient">Admin Dashboard</h1>
         <p className="text-dark-300">Manage users and monitor document activity</p>
       </div>
 
@@ -133,21 +133,21 @@ export default function AdminDashboard() {
       <StatsOverview users={users} />
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row">
         <div className="flex-1">
           <input
             type="text"
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 text-white border rounded-lg bg-dark-800 border-dark-700 placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <div className="flex gap-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "name" | "documents" | "lastLogin" | "size")}
-            className="px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 text-white border rounded-lg bg-dark-800 border-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="name">Sort by Name</option>
             <option value="documents">Sort by Documents</option>
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
           </select>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg text-white hover:bg-dark-700 transition-colors"
+            className="px-4 py-2 text-white transition-colors border rounded-lg bg-dark-800 border-dark-700 hover:bg-dark-700"
           >
             {sortOrder === "asc" ? "↑" : "↓"}
           </button>
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Users Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredAndSortedUsers.map((user) => (
           <UserCard
             key={user.uid}
@@ -176,8 +176,8 @@ export default function AdminDashboard() {
       </div>
 
       {filteredAndSortedUsers.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-dark-400 text-lg">No users found</p>
+        <div className="py-12 text-center">
+          <p className="text-lg text-dark-400">No users found</p>
         </div>
       )}
 

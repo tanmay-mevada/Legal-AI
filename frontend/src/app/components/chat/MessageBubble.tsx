@@ -86,8 +86,8 @@ const formatDetailedExplanation = (content: string) => {
       return (
         <div key={index} className={cn("rounded-lg border p-4 mb-3", sectionClasses)}>
           <div className="flex items-center gap-2 mb-2">
-            {/* {icon}
-            <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4> */}
+            {/* {icon} */}
+            {/* <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4> */}
           </div>
           <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
             <ReactMarkdown>{`\n${cleanContent}`}</ReactMarkdown>
