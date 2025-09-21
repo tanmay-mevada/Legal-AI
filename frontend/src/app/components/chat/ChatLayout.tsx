@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { supabase } from "@/lib/supabaseClient";
-import { getAuth } from "firebase/auth";
+// import { getAuth } from "firebase/auth";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
 import ResponsiveLayout from "../layout/ResponsiveLayout";
@@ -69,16 +69,62 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
   // Handle file upload
   const handleFileUpload = async (file: File) => {
     setIsProcessing(true);
-    
     try {
       // Sanitize file name for Supabase Storage
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `user-files/${safeName}`;
-      
+
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage.from("uploads").upload(path, file);
       if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
+        // Custom logic for 'resource already exists'
+        if (uploadError.message && uploadError.message.includes("already exists")) {
+          // Find document by bucket_path
+          const token = await auth.currentUser?.getIdToken();
+          const response = await fetch("http://127.0.0.1:8000/api/documents/", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          const found = data.documents?.find((d: Document) => d.bucket_path === path);
+          if (!found) {
+            // User-friendly status message for this edge case
+            setDocuments(prev => prev); // No change, but could trigger UI update if needed
+            setSelectedDocumentId(null);
+            setIsProcessing(false);
+            // Optionally, set a status message in your UI (if you have a status setter)
+            // Example: setStatus("File exists in storage but not in database. Please contact support or try a different file.");
+            return;
+          }
+          if (found.status === "processed") {
+            setSelectedDocumentId(found.id);
+            setIsProcessing(false);
+            return;
+          } else {
+            // Start processing
+            const processResponse = await fetch(`http://127.0.0.1:8000/api/documents/${found.id}/process`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            if (!processResponse.ok) {
+              console.error("Failed to start processing");
+              setIsProcessing(false);
+              return;
+            }
+            await pollForCompletion(found.id);
+            setSelectedDocumentId(found.id);
+            setIsProcessing(false);
+            return;
+          }
+        } else {
+          console.error("Upload failed:", uploadError.message);
+          setIsProcessing(false);
+          return;
+        }
       }
 
       // Create document metadata
@@ -99,12 +145,12 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Document creation failed: ${errorData.detail || "unknown error"}`);
+        console.error("Document creation failed:", errorData.detail || "unknown error");
+        setIsProcessing(false);
+        return;
       }
 
       const { document } = await response.json();
-      
-      // Add to documents list and select it
       setDocuments(prev => [document, ...prev]);
       setSelectedDocumentId(document.id);
 
@@ -118,15 +164,15 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
       });
 
       if (!processResponse.ok) {
-        throw new Error("Failed to start processing");
+        console.error("Failed to start processing");
+        setIsProcessing(false);
+        return;
       }
 
-      // Poll for completion
       await pollForCompletion(document.id);
 
     } catch (error) {
       console.error("Upload/processing error:", error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
     }

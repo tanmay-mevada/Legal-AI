@@ -22,25 +22,77 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     e.preventDefault();
     if (!file) return;
 
-    console.log("Starting upload for file:", file.name);
     setUploading(true);
     setStatus("Uploading...");
 
-  // Sanitize file name for Supabase Storage
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `user-files/${safeName}`;
-  console.log("Uploading to path:", path);
-  
-  const { error } = await supabase.storage.from("uploads").upload(path, file);
-    if (error) {
-      console.error("Supabase upload error:", error);
-      setUploading(false);
-      setStatus("Upload failed: " + error.message);
-      return;
-    }
-    
-    console.log("Supabase upload successful");
+    // Sanitize file name for Supabase Storage
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `user-files/${safeName}`;
 
+    // Try upload
+    const { error } = await supabase.storage.from("uploads").upload(path, file);
+    if (error) {
+      // If resource exists, handle re-upload logic
+      if (error.message && error.message.includes("already exists")) {
+        setStatus("File already exists. Checking status...");
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          setUploading(false);
+          setStatus("User not logged in (Firebase)");
+          return;
+        }
+        const token = await user.getIdToken();
+        // Find document by bucket_path
+        const docRes = await fetch(`http://127.0.0.1:8000/api/documents/`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const docList = await docRes.json();
+        type Document = {
+          id: string;
+          file_name: string;
+          bucket_path: string;
+          status: string;
+        };
+        const found = docList.documents?.find((d: Document) => d.bucket_path === path);
+        if (!found) {
+          setUploading(false);
+          setStatus("File exists in storage but not in database. Please contact support or try a different file.");
+          return;
+        }
+        if (found.status === "processed") {
+          setStatus("File already processed. Showing chat...");
+          onUploaded({ docId: found.id, fileName: found.file_name, bucketPath: found.bucket_path });
+        } else {
+          setStatus("File exists but not processed. Processing now...");
+          // Trigger processing
+          const processRes = await fetch(`http://127.0.0.1:8000/api/documents/${found.id}/process`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const processData = await processRes.json();
+          if (processRes.ok) {
+            setStatus("File processed. Showing chat...");
+            onUploaded({ docId: found.id, fileName: found.file_name, bucketPath: found.bucket_path });
+          } else {
+            setStatus("Processing failed: " + (processData.detail || "unknown error"));
+          }
+        }
+        setUploading(false);
+        return;
+      } else {
+        setUploading(false);
+        setStatus("Upload failed: " + error.message);
+        return;
+      }
+    }
+
+    // Normal upload flow
     const auth = getAuth();
     const user = auth.currentUser;
     if (!user) {
@@ -50,8 +102,6 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
-    console.log("Creating document metadata...");
-    
     const res = await fetch("http://127.0.0.1:8000/api/documents/", {
       method: "POST",
       headers: {
@@ -65,25 +115,16 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
         size_bytes: file.size,
       }),
     });
-
-    console.log("Document creation response status:", res.status);
     const data = await res.json();
-    console.log("Document creation response data:", data);
-    
     if (!res.ok) {
-      console.error("Document creation failed:", data);
       setUploading(false);
       setStatus("Metadata insert failed: " + (data.detail || "unknown error"));
       return;
     }
-
-    // Only call onUploaded if document was inserted and has an id
     if (data && data.document && data.document.id) {
-      console.log("Calling onUploaded with:", { docId: data.document.id, fileName: file.name, bucketPath: path });
       onUploaded({ docId: data.document.id, fileName: file.name, bucketPath: path });
       setStatus("Upload complete. Ready to process.");
     } else {
-      console.error("No document ID returned:", data);
       setStatus("Upload succeeded, but no document ID returned.");
     }
     setUploading(false);
@@ -93,7 +134,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     <div className="p-6 border glass-morphism rounded-2xl border-slate-200 dark:border-dark-700/50 bg-white/60 dark:bg-transparent">
       <h3 className="mb-3 text-xl font-semibold text-slate-900 dark:text-white">Upload a document</h3>
       <form onSubmit={handleUpload} className="flex flex-col gap-3">
-        <label className="flex flex-col items-center justify-center gap-2 p-6 transition border-2 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 border-slate-300 text-slate-600 dark:bg-dark-900/60 dark:hover:bg-dark-900 dark:border-dark-700/60 dark:text-dark-300">
+        <label className="flex flex-col items-center justify-center gap-2 p-6 transition bg-white border-2 border-dashed cursor-pointer rounded-xl hover:bg-slate-50 border-slate-300 text-slate-600 dark:bg-dark-900/60 dark:hover:bg-dark-900 dark:border-dark-700/60 dark:text-dark-300">
           <span className="text-sm">Drop your file here or click to browse</span>
           <input
             type="file"
@@ -103,7 +144,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
           />
         </label>
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-slate-500 dark:text-dark-300 truncate">
+          <div className="text-xs truncate text-slate-500 dark:text-dark-300">
             {file ? file.name : "No file selected"}
           </div>
           <button
