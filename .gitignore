@@ -16,6 +16,9 @@ pnpm-debug.log*
 # Firebase / Service account keys
 serviceAccountKey*.json
 firebase-*.json
+serviceAccountKey0.json
+serviceAccountKey1.json 
+serviceAccountKey.json
 
 # Env files (keep secrets local)
 .env
