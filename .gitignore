@@ -13,6 +13,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Firebase / Service account keys
+serviceAccountKey*.json
+firebase-*.json
+
 # Env files (keep secrets local)
 .env
 .env.local

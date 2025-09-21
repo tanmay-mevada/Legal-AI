@@ -3,18 +3,19 @@ from app.core.firebase_admin import get_current_user_from_auth_header
 from app.core.supabase import supabase
 from typing import List, Dict, Any
 from datetime import datetime
+import os
 
 router = APIRouter()
 
-# Admin email list - customize this for your needs
-ADMIN_EMAILS = [
-    "tanmaymevada24@gmail.com"
-]
+def get_admin_emails() -> list:
+    """Get admin emails from environment variable"""
+    emails = os.getenv("ADMIN_EMAILS", "")
+    return [e.strip() for e in emails.split(",") if e.strip()]
 
 def is_admin_user(user: Dict[str, Any]) -> bool:
     """Check if the user is an admin"""
     user_email = user.get("email", "")
-    return user_email in ADMIN_EMAILS
+    return user_email in get_admin_emails()
 
 @router.get("/test")
 def test_admin_endpoint():

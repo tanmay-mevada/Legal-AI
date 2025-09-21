@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.core.firebase_admin import get_current_user_from_auth_header
 from app.core.documentai_client import process_document_bytes, DocumentAIError
 from app.core.gemini import summarize_with_gemini
-from app.core.supabase import supabase  # ✅ wrapper we created
+from app.core.supabase import supabase  #wrapper we created
 
 router = APIRouter()
 

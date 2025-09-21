@@ -11,12 +11,12 @@ export default function ResponsiveTest() {
       <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
         <h3 className="font-semibold mb-2">Current Breakpoint:</h3>
         <div className="space-y-1 text-sm">
-          <div className="xs:block hidden text-green-600">✓ Extra Small (xs: 475px+)</div>
-          <div className="sm:block hidden text-green-600">✓ Small (sm: 640px+)</div>
-          <div className="md:block hidden text-green-600">✓ Medium (md: 768px+)</div>
-          <div className="lg:block hidden text-green-600">✓ Large (lg: 1024px+)</div>
-          <div className="xl:block hidden text-green-600">✓ Extra Large (xl: 1280px+)</div>
-          <div className="2xl:block hidden text-green-600">✓ 2X Large (2xl: 1536px+)</div>
+          <div className="xs:block hidden text-green-600">Extra Small (xs: 475px+)</div>
+          <div className="sm:block hidden text-green-600">Small (sm: 640px+)</div>
+          <div className="md:block hidden text-green-600">Medium (md: 768px+)</div>
+          <div className="lg:block hidden text-green-600">Large (lg: 1024px+)</div>
+          <div className="xl:block hidden text-green-600">Extra Large (xl: 1280px+)</div>
+          <div className="2xl:block hidden text-green-600">2X Large (2xl: 1536px+)</div>
         </div>
       </div>
 

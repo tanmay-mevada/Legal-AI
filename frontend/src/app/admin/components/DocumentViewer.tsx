@@ -37,10 +37,10 @@ export default function DocumentViewer({ user, onClose, formatFileSize }: Docume
   });
 
   const getContentTypeIcon = (contentType: string) => {
-    if (contentType.includes("pdf")) return "📄";
-    if (contentType.includes("word") || contentType.includes("document")) return "📝";
-    if (contentType.includes("image")) return "🖼️";
-    return "📁";
+  if (contentType.includes("pdf")) return "";
+  if (contentType.includes("word") || contentType.includes("document")) return "";
+  if (contentType.includes("image")) return "";
+  return "";
   };
 
   return (
@@ -57,7 +57,7 @@ export default function DocumentViewer({ user, onClose, formatFileSize }: Docume
               onClick={onClose}
               className="w-8 h-8 bg-dark-700 hover:bg-dark-600 rounded-lg flex items-center justify-center text-dark-300 hover:text-white transition-colors"
             >
-              ✕
+              
             </button>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function DocumentViewer({ user, onClose, formatFileSize }: Docume
                     onClick={() => setSelectedDocument(null)}
                     className="w-8 h-8 bg-dark-700 hover:bg-dark-600 rounded-lg flex items-center justify-center text-dark-300 hover:text-white transition-colors"
                   >
-                    ✕
+                    
                   </button>
                 </div>
               </div>
