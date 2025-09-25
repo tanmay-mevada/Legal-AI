@@ -17,7 +17,7 @@ POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", 10))  # seconds
 
 def fetch_next_queued():
     res = supabase.table("documents").select("*").eq("status", "queued").limit(1).execute()
-    if res.error or not res.data:
+    if not res.data:
         return None
     return res.data[0]
 

@@ -12,7 +12,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def fetch_next_queued():
     res = supabase.table("documents").select("*").eq("status", "queued").limit(1).execute()
-    if res.error or not res.data:
+    if not res.data:
         return None
     return res.data[0]
 

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getAuth } from "firebase/auth";
+import { API_URLS } from "@/lib/config";
 
 type Props = {
   onUploaded: (args: { docId: string; fileName: string; bucketPath: string }) => void;
@@ -44,7 +45,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
         }
         const token = await user.getIdToken();
         // Find document by bucket_path
-  const docRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/`, {
+  const docRes = await fetch(API_URLS.DOCUMENTS, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,7 +70,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
         } else {
           setStatus("File exists but not processed. Processing now...");
           // Trigger processing
-          const processRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${found.id}/process`, {
+          const processRes = await fetch(API_URLS.PROCESS_DOCUMENT(found.id), {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -102,7 +103,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
-  const res = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/documents/", {
+  const res = await fetch(API_URLS.DOCUMENTS, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

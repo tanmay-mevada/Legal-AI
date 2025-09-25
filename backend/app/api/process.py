@@ -2,9 +2,9 @@ import os
 import io
 from datetime import datetime
 from fastapi import APIRouter, Header, HTTPException
-from app.core.firebase_admin import get_current_user_from_auth_header
-from app.core.documentai_client import process_document_bytes
-from app.core.supabase import supabase  # ✅ Supabase client wrapper
+from app.api.core.firebase_admin import get_current_user_from_auth_header
+from app.api.core.documentai_client import process_document_bytes
+from app.api.core.supabase import supabase  # ✅ Supabase client wrapper
 
 router = APIRouter()
 

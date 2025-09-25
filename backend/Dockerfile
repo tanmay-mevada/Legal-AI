@@ -14,5 +14,8 @@ COPY . .
 # Expose the port on which the FastAPI application will run
 EXPOSE 8080
 
-# Command to run the application - FIXED to use $PORT environment variable
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Set environment variable for Python path
+ENV PYTHONPATH=/app
+
+# Command to run the application using uvicorn directly with PORT env var
+CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}

@@ -4,10 +4,10 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from app.core.firebase_admin import get_current_user_from_auth_header
-from app.core.documentai_client import process_document_bytes, DocumentAIError
-from app.core.gemini import summarize_with_gemini
-from app.core.supabase import supabase  #wrapper we created
+from app.api.core.firebase_admin import get_current_user_from_auth_header
+from app.api.core.documentai_client import process_document_bytes, DocumentAIError
+from app.api.core.gemini import summarize_with_gemini
+from app.api.core.supabase import supabase  #wrapper we created
 
 router = APIRouter()
 
@@ -162,26 +162,79 @@ def create_document(payload: DocumentCreate, authorization: str | None = Header(
                 detail="File type not supported. Please upload PDF, DOC, or DOCX files only."
             )
 
-        # ✅ Use the exact path frontend used (don't generate a new one here)
+        # Generate unique document identifier: user_id + original_filename
+        # This allows same filename per user but prevents duplicates per user
+        unique_file_key = f"{uid}:{payload.file_name}"
+        
+        # Prepare the row data, conditionally including unique_file_key if it exists
         row = {
             "user_id": uid,
             "file_name": payload.file_name,
-            "bucket_path": payload.bucket_path,  # keep consistent with Supabase
+            "bucket_path": payload.bucket_path,
             "content_type": payload.content_type,
             "size_bytes": payload.size_bytes,
             "pages": payload.pages,
             "status": "uploaded",
         }
+        
+        # Try to include unique_file_key, but gracefully handle if column doesn't exist
+        try:
+            row["unique_file_key"] = unique_file_key
+        except Exception as e:
+            print(f"Note: unique_file_key column may not exist yet: {e}")
 
         print(f"Inserting row: {row}")
+        
+        # First, check if user already has a document with this filename (smart duplicate detection)
+        # Check if unique_file_key column exists in the database
+        try:
+            existing_res = supabase.table("documents").select("*").eq("unique_file_key", unique_file_key).execute()
+            if existing_res.data:
+                existing_doc = existing_res.data[0]
+                print(f"User {uid} already has document with filename '{payload.file_name}', returning existing document: {existing_doc['id']}")
+                return {"document": existing_doc, "isExisting": True}
+        except Exception as check_error:
+            print(f"Error checking for existing document: {check_error}")
+            # If unique_file_key column doesn't exist, fall back to checking by user_id and file_name
+            try:
+                print("Falling back to user_id + file_name duplicate check")
+                fallback_res = supabase.table("documents").select("*").eq("user_id", uid).eq("file_name", payload.file_name).execute()
+                if fallback_res.data:
+                    existing_doc = fallback_res.data[0]
+                    print(f"User {uid} already has document with filename '{payload.file_name}' (fallback check), returning existing document: {existing_doc['id']}")
+                    return {"document": existing_doc, "isExisting": True}
+            except Exception as fallback_error:
+                print(f"Fallback duplicate check also failed: {fallback_error}")
+            # Continue with insert attempt even if check fails
         
         try:
             res = supabase.table("documents").insert(row).execute()
             print(f"Document created successfully: {res.data[0]['id']}")
-            return {"document": res.data[0]}
+            return {"document": res.data[0], "isExisting": False}
         except Exception as e:
-            print(f"Supabase insert failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Supabase insert failed: {str(e)}")
+            error_str = str(e)
+            print(f"Supabase insert failed: {error_str}")
+            
+            # Handle duplicate key constraint violation
+            if "duplicate key value violates unique constraint" in error_str:
+                # Try to find the existing document and return it
+                try:
+                    existing_res = supabase.table("documents").select("*").eq("unique_file_key", unique_file_key).execute()
+                    if existing_res.data:
+                        existing_doc = existing_res.data[0]
+                        print(f"Returning existing document after duplicate error: {existing_doc['id']}")
+                        return {"document": existing_doc, "isExisting": True}
+                except Exception as fetch_error:
+                    print(f"Error fetching existing document after duplicate: {fetch_error}")
+                
+                # If we can't find the existing document, return a user-friendly error
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"You already have a document named '{payload.file_name}'. The existing conversation will be opened."
+                )
+            
+            # For other database errors
+            raise HTTPException(status_code=500, detail=f"Database error: Failed to create document record")
     except HTTPException:
         raise
     except Exception as e:
@@ -362,8 +415,9 @@ Page Count: [Estimated based on content length]
                 
         except Exception as e:
             print(f"Gemini enhanced analysis error: {e}")
-            # Fallback to original summary
+            # Provide a comprehensive fallback summary
             try:
+                # Try basic Gemini summary first
                 summary = summarize_with_gemini(extracted_text)
                 detailed_explanation = ""
                 metadata = {
@@ -377,7 +431,11 @@ Page Count: [Estimated based on content length]
                 }
             except Exception as fallback_error:
                 print(f"Fallback summary also failed: {fallback_error}")
-                summary = None
+                # Ultimate fallback - create basic text-based summary
+                word_count = len(extracted_text.split())
+                char_count = len(extracted_text)
+                summary = (f"Document processed successfully. Contains {word_count} words and {char_count} characters. "
+                          f"AI analysis is temporarily unavailable, but you can review the full document text below.")
                 detailed_explanation = ""
                 metadata = {
                     'documentType': None,
@@ -385,7 +443,7 @@ Page Count: [Estimated based on content length]
                     'riskLevel': None,
                     'riskFactors': [],
                     'keyParties': [],
-                    'wordCount': len(extracted_text.split()),
+                    'wordCount': word_count,
                     'pageCount': None
                 }
 

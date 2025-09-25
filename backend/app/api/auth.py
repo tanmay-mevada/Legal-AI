@@ -1,4 +1,4 @@
-from app.core.firebase_admin import firebase_admin
+from app.api.core.firebase_admin import firebase_admin
 from fastapi import Depends, HTTPException, Header
 from firebase_admin import auth as firebase_auth
 

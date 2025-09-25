@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { auth } from "@/lib/firebase";
 import type { Dispatch, SetStateAction } from "react";
+import { API_URLS } from "@/lib/config";
 import UploadCard from "./UploadCard";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -42,7 +43,7 @@ export default function FileUploadForm({ onSummary }: FileUploadFormProps) {
     // 2. Start processing the document
     try {
       const token = await auth.currentUser?.getIdToken();
-  const processRes = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${dbId}/process`, {
+  const processRes = await fetch(API_URLS.PROCESS_DOCUMENT(dbId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +68,7 @@ export default function FileUploadForm({ onSummary }: FileUploadFormProps) {
       let tries = 0;
       while (!done && tries < 60) {
         const token = await auth.currentUser?.getIdToken();
-  const resp = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${dbId}`, {
+  const resp = await fetch(API_URLS.GET_DOCUMENT(dbId), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -51,9 +51,9 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
-        <div className="w-16 h-16 mb-4 border-4 rounded-full border-dark-700 border-t-electric-400 animate-spin"></div>
-        <span className="text-lg font-medium text-dark-300 animate-pulse">
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="w-16 h-16 mb-4 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+        <span className="text-lg font-medium text-gray-600 dark:text-gray-300 animate-pulse">
           Loading Admin Panel...
         </span>
       </div>
@@ -62,13 +62,13 @@ export default function AdminPage() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <h1 className="mb-6 text-4xl font-bold text-gradient">Admin Panel</h1>
-          <p className="mb-8 text-dark-300">Please sign in to access the admin panel</p>
+          <h1 className="mb-6 text-4xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+          <p className="mb-8 text-gray-600 dark:text-gray-300">Please sign in to access the admin panel</p>
           <button
             onClick={() => window.location.href = "/"}
-            className="px-6 py-3 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700"
+            className="px-6 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Go to Login
           </button>
@@ -79,13 +79,13 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-dark-950 bg-neural">
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <h1 className="mb-6 text-4xl font-bold text-gradient">Access Denied</h1>
-          <p className="mb-8 text-dark-300">You dont have admin privileges</p>
+          <h1 className="mb-6 text-4xl font-bold text-gray-900 dark:text-white">Access Denied</h1>
+          <p className="mb-8 text-gray-600 dark:text-gray-300">You don&apos;t have admin privileges</p>
           <button
             onClick={() => window.location.href = "/"}
-            className="px-6 py-3 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700"
+            className="px-6 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Go Back
           </button>
@@ -95,7 +95,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 bg-neural">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminDashboard />
     </div>
   );

@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       const token = await currentUser.getIdToken();
       
       // Fetch users from backend API
-  const response = await fetch("https://fastapi-app-63563783552.us-east1.run.app/api/admin/users", {
+      const response = await fetch("https://legal-ai-backend-63563783552.us-central1.run.app/api/admin/users", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",

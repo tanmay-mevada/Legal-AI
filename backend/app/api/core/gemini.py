@@ -2,8 +2,23 @@ import os
 import json
 from typing import Optional, Dict, Any
 
-import vertexai
-from vertexai.generative_models import GenerativeModel, GenerationConfig
+try:
+    import vertexai
+    from vertexai.generative_models import GenerativeModel, GenerationConfig
+    VERTEX_AI_AVAILABLE = True
+    print("Vertex AI successfully imported")
+except ImportError as e:
+    print(f"Vertex AI not available: {e}")
+    VERTEX_AI_AVAILABLE = False
+    vertexai = None
+    GenerativeModel = None
+    GenerationConfig = None
+except Exception as e:
+    print(f"Unexpected error importing Vertex AI: {e}")
+    VERTEX_AI_AVAILABLE = False
+    vertexai = None
+    GenerativeModel = None
+    GenerationConfig = None
 
 
 _PROJECT_ID = os.getenv("GCP_PROJECT_ID")
@@ -120,6 +135,15 @@ def summarize_with_gemini(document_text: str, max_tokens: int = 800) -> str:
     """
     if not document_text:
         return ""
+    
+    if not VERTEX_AI_AVAILABLE:
+        print("Vertex AI not available, returning basic summary")
+        # Provide a basic summary based on text analysis
+        word_count = len(document_text.split())
+        char_count = len(document_text)
+        return (f"Document Summary: This document contains {word_count} words and {char_count} characters. "
+               f"AI analysis is currently unavailable, but the document has been successfully processed and stored. "
+               f"You can view the full extracted text in the chat interface.")
 
     # Try candidates (location x model) until one succeeds
     last_err: Exception | None = None
@@ -189,6 +213,19 @@ def analyze_document_with_gemini(document_text: str, max_tokens: int = 1200) -> 
     """
     if not document_text:
         return {'summary': '', 'extracted_text': document_text}
+    
+    if not VERTEX_AI_AVAILABLE:
+        return {
+            'summary': f"Analysis not available (Vertex AI not configured). Document contains {len(document_text.split())} words.",
+            'extracted_text': document_text,
+            'document_type': 'Unknown',
+            'complexity': 'Unknown',
+            'risk_level': 'Unknown',
+            'risk_factors': ['Vertex AI not configured for analysis'],
+            'key_parties': [],
+            'word_count': len(document_text.split()),
+            'page_count': 'Unknown'
+        }
 
     # Try candidates (location x model) until one succeeds
     last_err: Exception | None = None

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { getAuth } from "firebase/auth";
+import { API_URLS } from "@/lib/config";
 
 type Props = {
   docId: string;
@@ -25,7 +26,7 @@ export default function ProcessButton({ docId, onProcessed, onStatus }: Props) {
     }
 
     const token = await user.getIdToken();
-  const res = await fetch(`https://fastapi-app-63563783552.us-east1.run.app/api/documents/${docId}/process`, {
+  const res = await fetch(API_URLS.PROCESS_DOCUMENT(docId), {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

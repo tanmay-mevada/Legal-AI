@@ -3,18 +3,28 @@ import re
 from google.cloud import documentai_v1 as documentai
 from google.api_core import exceptions as gcp_exceptions
 
-project_id = os.getenv("GCP_PROJECT_ID")
-location = os.getenv("GCP_LOCATION", "us")
-processor_id = os.getenv("DOC_AI_PROCESSOR_ID")
+_client = None
+_processor_name = None
 
-print(f"Document AI Config - Project: {project_id}, Location: {location}, Processor: {processor_id}")
+def get_documentai_client():
+    """Get or create Document AI client with lazy initialization"""
+    global _client, _processor_name
+    
+    if _client is None:
+        project_id = os.getenv("GCP_PROJECT_ID")
+        location = os.getenv("GCP_LOCATION", "us")
+        processor_id = os.getenv("DOC_AI_PROCESSOR_ID")
 
-if not project_id or not processor_id:
-    raise RuntimeError("Missing required Document AI environment variables: GCP_PROJECT_ID, DOC_AI_PROCESSOR_ID")
+        print(f"Document AI Config - Project: {project_id}, Location: {location}, Processor: {processor_id}")
 
-client = documentai.DocumentProcessorServiceClient()
-processor_name = client.processor_path(project_id, location, processor_id)
-print(f"Processor name: {processor_name}")
+        if not project_id or not processor_id:
+            raise RuntimeError("Missing required Document AI environment variables: GCP_PROJECT_ID, DOC_AI_PROCESSOR_ID")
+
+        _client = documentai.DocumentProcessorServiceClient()
+        _processor_name = _client.processor_path(project_id, location, processor_id)
+        print(f"Processor name: {_processor_name}")
+    
+    return _client, _processor_name
 
 class DocumentAIError(Exception):
     """Custom exception for Document AI errors"""
@@ -75,6 +85,9 @@ def process_document_bytes(file_bytes: bytes):
         mime_type="application/pdf"
     )
 
+    # Get the client and processor name
+    client, processor_name = get_documentai_client()
+    
     request = documentai.ProcessRequest(
         name=processor_name,
         raw_document=raw_document

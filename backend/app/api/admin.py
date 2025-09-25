@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
-from app.core.firebase_admin import get_current_user_from_auth_header
-from app.core.supabase import supabase
+from app.api.core.firebase_admin import get_current_user_from_auth_header
+from app.api.core.supabase import supabase
 from typing import List, Dict, Any
 from datetime import datetime
 import os
@@ -97,9 +97,6 @@ def get_admin_stats(authorization: str | None = Header(None)):
         # Get all documents
         res = supabase.table("documents").select("*").execute()
         
-        if res.error:
-            raise HTTPException(status_code=500, detail=f"Supabase query failed: {res.error}")
-        
         documents = res.data or []
         
         # Calculate stats
@@ -143,9 +140,6 @@ def get_user_documents(user_id: str, authorization: str | None = Header(None)):
     try:
         res = supabase.table("documents").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
         
-        if res.error:
-            raise HTTPException(status_code=500, detail=f"Supabase query failed: {res.error}")
-        
         return {"documents": res.data or []}
         
     except Exception as e:
@@ -163,14 +157,11 @@ def delete_user_document(user_id: str, doc_id: str, authorization: str | None = 
         # First verify the document belongs to the user
         res = supabase.table("documents").select("*").eq("id", doc_id).eq("user_id", user_id).execute()
         
-        if res.error or not res.data:
+        if not res.data:
             raise HTTPException(status_code=404, detail="Document not found")
         
         # Delete the document
         delete_res = supabase.table("documents").delete().eq("id", doc_id).execute()
-        
-        if delete_res.error:
-            raise HTTPException(status_code=500, detail=f"Failed to delete document: {delete_res.error}")
         
         return {"message": "Document deleted successfully"}
         
