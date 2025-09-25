@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
 import { FileText, Bot, User, AlertTriangle, Info, XCircle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExpandableContent from "./ExpandableContent";

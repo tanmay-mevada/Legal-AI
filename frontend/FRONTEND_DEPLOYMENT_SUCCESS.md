@@ -22,7 +22,7 @@ Files updated:
 
 #### 3. **API Endpoints Migration** ✅
 **From:** `https://fastapi-app-63563783552.us-east1.run.app`  
-**To:** `https://legal-ai-backend-63563783552.us-central1.run.app`
+**To:** `https://legal-ai-backend-63563783552.us-central1.run.app` (UPDATED ✅)
 
 Updated endpoints:
 - ✅ `/api/activity/track-login` - User login tracking

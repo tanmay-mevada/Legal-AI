@@ -85,7 +85,7 @@ export default function Sidebar({
         <Button
           onClick={onNewUpload}
           size="sm"
-          className="w-8 h-8 p-0 bg-black rounded-full shadow-sm hover:from-blue-700 hover:to-purple-700"
+          className="w-8 h-8 p-0 text-white bg-black rounded-full shadow-sm hover:bg-white hover:text-black"
           title="New Chat"
         >
           <Plus className="w-4 h-4" />

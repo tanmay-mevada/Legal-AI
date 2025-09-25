@@ -3,10 +3,20 @@ import json
 from typing import Optional, Dict, Any
 
 try:
-    import vertexai
-    from vertexai.generative_models import GenerativeModel, GenerationConfig
-    VERTEX_AI_AVAILABLE = True
-    print("Vertex AI successfully imported")
+    # Try importing from google.cloud.aiplatform first, then vertexai
+    try:
+        from google.cloud import aiplatform
+        from google.cloud.aiplatform.gapic.schema import predict
+        from vertexai.generative_models import GenerativeModel, GenerationConfig
+        import vertexai
+        VERTEX_AI_AVAILABLE = True
+        print("Vertex AI successfully imported with aiplatform")
+    except ImportError:
+        # Fallback to direct vertexai import
+        import vertexai
+        from vertexai.generative_models import GenerativeModel, GenerationConfig
+        VERTEX_AI_AVAILABLE = True
+        print("Vertex AI successfully imported (direct)")
 except ImportError as e:
     print(f"Vertex AI not available: {e}")
     VERTEX_AI_AVAILABLE = False
@@ -21,7 +31,7 @@ except Exception as e:
     GenerationConfig = None
 
 
-_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
+_PROJECT_ID = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("FIREBASE_PROJECT_ID")
 
 # Prefer a Vertex/Gemini-specific location if provided; fall back to GCP_LOCATION.
 _RAW_LOCATION = (

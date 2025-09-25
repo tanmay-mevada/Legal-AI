@@ -6,15 +6,11 @@ import Link from "next/link";
 interface MobileHeaderProps {
   title: string;
   subtitle?: string;
-  onNewChat?: () => void;
-  showNewChatButton?: boolean;
 }
 
 export default function MobileHeader({ 
   title, 
-  subtitle, 
-  onNewChat, 
-  showNewChatButton = false 
+  subtitle
 }: MobileHeaderProps) {
   return (
     <div className="flex items-center justify-between p-3 border-b border-gray-200 sm:p-4 dark:border-gray-700">

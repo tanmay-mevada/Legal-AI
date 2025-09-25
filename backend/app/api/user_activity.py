@@ -39,7 +39,7 @@ def track_user_login(authorization: str | None = Header(None)):
         
         logger.info(f"Existing user activity query result: {existing}")
         
-        if existing.data:
+        if existing.data and len(existing.data) > 0:
             # Update existing record
             logger.info(f"Updating existing user activity record")
             res = supabase.table("user_activity").update({

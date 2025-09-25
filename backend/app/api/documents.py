@@ -338,13 +338,14 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
             print("Document AI processing completed")
         except DocumentAIError as e:
             print(f"Document AI error: {e.message}")
-            # Update document status to failed with specific error
-            supabase.table("documents").update({
-                "status": "failed",
-                "error_message": e.user_message,
-                "error_code": e.error_code,
-                "processed_at": datetime.utcnow().isoformat()
-            }).eq("id", doc_id).execute()
+            # Update document status to failed (only using existing columns)
+            try:
+                supabase.table("documents").update({
+                    "status": "failed",
+                    "processed_at": datetime.utcnow().isoformat()
+                }).eq("id", doc_id).execute()
+            except Exception as update_error:
+                print(f"Failed to update document status: {update_error}")
             
             # Return user-friendly error message
             raise HTTPException(
@@ -353,13 +354,14 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
             )
         except Exception as e:
             print(f"Unexpected Document AI error: {e}")
-            # Update document status to failed
-            supabase.table("documents").update({
-                "status": "failed",
-                "error_message": "Document processing failed due to an unexpected error.",
-                "error_code": "UNKNOWN_ERROR",
-                "processed_at": datetime.utcnow().isoformat()
-            }).eq("id", doc_id).execute()
+            # Update document status to failed (only using existing columns)
+            try:
+                supabase.table("documents").update({
+                    "status": "failed",
+                    "processed_at": datetime.utcnow().isoformat()
+                }).eq("id", doc_id).execute()
+            except Exception as update_error:
+                print(f"Failed to update document status: {update_error}")
             raise HTTPException(status_code=500, detail="Document processing failed. Please try again or contact support.")
 
         # 4. Update DB with extracted text

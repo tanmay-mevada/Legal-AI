@@ -38,13 +38,13 @@ def _parse_document_ai_error(error_message: str) -> tuple[str, str]:
     """Parse Document AI error message to extract error type and user-friendly message"""
     
     # Page limit exceeded
-    if "PAGE_LIMIT_EXCEEDED" in error_message:
+    if "PAGE_LIMIT_EXCEEDED" in error_message or "pages exceed the limit" in error_message.lower():
         page_match = re.search(r'(\d+) got (\d+)', error_message)
         if page_match:
             limit = page_match.group(1)
             actual = page_match.group(2)
-            return "PAGE_LIMIT_EXCEEDED", f"Document has {actual} pages, but the limit is {limit} pages. Please split the document into smaller parts."
-        return "PAGE_LIMIT_EXCEEDED", "Document exceeds the maximum page limit. Please split the document into smaller parts."
+            return "PAGE_LIMIT_EXCEEDED", f"📄 Your document has {actual} pages, but our Document AI processor can only handle up to {limit} pages at a time.\n\n💡 **Solutions:**\n• Split your PDF into smaller sections (max {limit} pages each)\n• Try uploading individual sections separately\n• Use a PDF splitter tool to divide the document"
+        return "PAGE_LIMIT_EXCEEDED", "📄 Document exceeds the maximum page limit (30 pages). Please split the document into smaller parts and try again."
     
     # File size limit exceeded
     if "FILE_SIZE_EXCEEDED" in error_message or "file size" in error_message.lower():

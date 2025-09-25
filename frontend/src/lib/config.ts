@@ -5,7 +5,7 @@
 // API Configuration
 export const API_CONFIG = {
   // Use the deployed Cloud Run service URL
-  BASE_URL: 'https://fastapi-app-63563783552.us-east1.run.app',
+  BASE_URL: 'https://legal-ai-backend-63563783552.us-central1.run.app',
   
   // API endpoints
   ENDPOINTS: {
