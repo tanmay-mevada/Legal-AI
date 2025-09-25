@@ -69,20 +69,33 @@ def _parse_document_ai_error(error_message: str) -> tuple[str, str]:
     # Default case
     return "UNKNOWN_ERROR", "Document processing failed. Please try again or contact support."
 
-def process_document_bytes(file_bytes: bytes):
-    print(f"Processing document with Document AI, file size: {len(file_bytes)} bytes")
+def process_document_bytes(file_bytes: bytes, mime_type: str = "application/pdf"):
+    print(f"Processing document with Document AI, file size: {len(file_bytes)} bytes, MIME type: {mime_type}")
     
     # Pre-validation checks
     if len(file_bytes) == 0:
         raise DocumentAIError("Empty file provided", "EMPTY_FILE", "The uploaded file is empty.")
     
+    # Document AI limits: 20MB for PDFs, 20MB for images
     if len(file_bytes) > 20 * 1024 * 1024:  # 20MB limit
         raise DocumentAIError(f"File size {len(file_bytes)} bytes exceeds 20MB limit", "FILE_SIZE_EXCEEDED", 
                             "Document file size is too large. Please use a file smaller than 20MB.")
     
+    # Validate supported MIME types
+    supported_types = [
+        "application/pdf",
+        "image/jpeg", "image/jpg",
+        "image/png", "image/gif", 
+        "image/tiff", "image/webp", "image/bmp"
+    ]
+    
+    if mime_type not in supported_types:
+        raise DocumentAIError(f"Unsupported MIME type: {mime_type}", "INVALID_DOCUMENT", 
+                            "Document format is not supported. Please use PDF or image files (JPEG, PNG, GIF, TIFF, WebP, BMP).")
+    
     raw_document = documentai.RawDocument(
         content=file_bytes,
-        mime_type="application/pdf"
+        mime_type=mime_type
     )
 
     # Get the client and processor name

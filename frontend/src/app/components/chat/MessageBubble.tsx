@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { FileText, Bot, User, AlertTriangle, Info, XCircle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,77 @@ interface MessageBubbleProps {
   detailedExplanation?: string;
   summary?: string;
 }
+
+// Typing animation component
+const TypewriterText: React.FC<{ text: string; speed?: number; delay?: number }> = ({ 
+  text, 
+  speed = 5, 
+  delay = 0 
+}) => {
+  const [displayText, setDisplayText] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    if (!text) return;
+    
+    const timer = setTimeout(() => {
+      let i = 0;
+      const typeInterval = setInterval(() => {
+        if (i < text.length) {
+          setDisplayText(text.slice(0, i + 1));
+          i++;
+        } else {
+          setIsComplete(true);
+          clearInterval(typeInterval);
+        }
+      }, speed);
+
+      return () => clearInterval(typeInterval);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [text, speed, delay]);
+
+  return (
+    <span>
+      {displayText}
+      {!isComplete && <span className="animate-pulse">|</span>}
+    </span>
+  );
+};
+
+// Animated section component
+const AnimatedSection: React.FC<{ 
+  children: React.ReactNode; 
+  delay?: number; 
+  className?: string;
+}> = ({ children, delay = 0, className = "" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "transform transition-all duration-700 ease-out",
+        isVisible 
+          ? "translate-y-0 opacity-100" 
+          : "translate-y-4 opacity-0",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+};
 
 // Helper function to parse and format detailed explanation
 const formatDetailedExplanation = (content: string) => {
@@ -84,25 +155,25 @@ const formatDetailedExplanation = (content: string) => {
       }
       
       return (
-        <div key={index} className={cn("rounded-lg border p-4 mb-3", sectionClasses)}>
+        <AnimatedSection key={index} delay={index * 200} className={cn("rounded-lg border p-4 mb-3", sectionClasses)}>
           <div className="flex items-center gap-2 mb-2">
-            {/* {icon} */}
-            {/* <h4 className="text-base font-bold text-blue-700 dark:text-blue-300">{cleanTitle}</h4> */}
+            {icon && <span className="flex-shrink-0">{icon}</span>}
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{cleanTitle}</h4>
           </div>
-          <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
-            <ReactMarkdown>{`\n${cleanContent}`}</ReactMarkdown>
+          <div className="prose prose-sm text-gray-700 max-w-none dark:prose-invert dark:text-gray-300 leading-relaxed">
+            <TypewriterText text={cleanContent.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*/g, '')} speed={3} delay={index * 50} />
           </div>
-        </div>
+        </AnimatedSection>
       );
     }
     
     // If no title pattern found, treat as regular content with better contrast
     return (
-      <div key={index} className="p-4 mb-3 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-600">
-        <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
-            <ReactMarkdown>{cleanedSection}</ReactMarkdown>
+      <AnimatedSection key={index} delay={index * 200} className="p-4 mb-3 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-600">
+        <div className="prose prose-sm text-gray-700 max-w-none dark:prose-invert dark:text-gray-300 leading-relaxed">
+          <TypewriterText text={cleanedSection.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*/g, '')} speed={3} delay={index * 50} />
         </div>
-      </div>
+      </AnimatedSection>
     );
   }).filter(Boolean);
 };
@@ -131,15 +202,15 @@ export default function MessageBubble({
 
   if (type === "user") {
     return (
-      <div className="flex justify-end px-2 mb-4 sm:px-0">
-        <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%]">
+      <AnimatedSection className="flex justify-end px-2 mb-6 sm:px-0">
+        <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] sm:max-w-[70%]">
           <div className="flex flex-col items-end gap-2">
-            <div className="px-3 py-2 text-white bg-blue-600 shadow-sm sm:px-4 sm:py-3 rounded-2xl rounded-br-md">
-              <div className="flex items-center gap-1 mb-1 sm:gap-2">
-                <FileText className="w-3 h-3 sm:h-4 sm:w-4" />
-                <span className="text-xs font-medium sm:text-sm">Uploaded file</span>
+            <div className="px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg sm:px-5 sm:py-4 rounded-2xl rounded-br-md">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 sm:h-5 sm:w-5" />
+                <span className="text-sm font-medium sm:text-base">Uploaded Document</span>
               </div>
-              <p className="text-xs break-words sm:text-sm opacity-90">{fileName}</p>
+              <p className="text-sm break-words sm:text-base opacity-95">{fileName}</p>
             </div>
             {timestamp && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -147,36 +218,35 @@ export default function MessageBubble({
               </span>
             )}
           </div>
-          <div className="flex items-center justify-center flex-shrink-0 w-6 h-6 text-white bg-blue-600 rounded-full sm:h-8 sm:w-8">
-            <User className="w-3 h-3 sm:h-4 sm:w-4" />
+          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-white bg-blue-600 rounded-full sm:h-10 sm:w-10">
+            <User className="w-4 h-4 sm:h-5 sm:w-5" />
           </div>
         </div>
-      </div>
+      </AnimatedSection>
     );
   }
 
   return (
-    <div className="flex justify-start px-2 mb-4 sm:px-0">
-      <div className="flex items-start gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%]">
-        <div className="flex items-center justify-center flex-shrink-0 w-6 h-6 text-gray-600 bg-gray-100 rounded-full sm:h-8 sm:w-8 dark:bg-gray-800 dark:text-gray-300">
-          <Bot className="w-3 h-3 sm:h-4 sm:w-4" />
+    <AnimatedSection className="flex justify-start px-2 mb-6 sm:px-0">
+      <div className="flex items-start gap-3 sm:gap-4 max-w-[95%] sm:max-w-[85%]">
+        <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-gray-600 bg-gray-100 rounded-full sm:h-10 sm:w-10 dark:bg-gray-800 dark:text-gray-300">
+          <Bot className="w-4 h-4 sm:h-5 sm:w-5" />
         </div>
-        <div className="flex flex-col gap-2">
-          <div className="px-3 py-2 bg-white border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700 sm:px-4 sm:py-3 rounded-2xl rounded-bl-md">
+        <div className="flex flex-col gap-3 min-w-0 flex-1">
+          <div className="px-4 py-4 bg-white border border-gray-200 shadow-lg dark:bg-gray-800 dark:border-gray-700 sm:px-6 sm:py-5 rounded-2xl rounded-bl-md">
             {isProcessing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div className="flex space-x-1">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                 </div>
-                <span className="text-xs text-gray-600 sm:text-sm dark:text-gray-300">
-                  Processing your document...
+                <span className="text-sm text-gray-600 sm:text-base dark:text-gray-300">
+                  Analyzing your document with AI...
                 </span>
               </div>
             ) : (
-              <div>
-                {/* Error Display - show if there's an error */}
+              <div className="space-y-4">
                 {errorCode && errorMessage && (
                   <ErrorDisplay
                     errorCode={errorCode}
@@ -185,59 +255,72 @@ export default function MessageBubble({
                   />
                 )}
                 
-                {/* Content - only show if no error */}
                 {!errorCode && (
                   <>
                     {contentType === "consolidated-analysis" ? (
-                      <div className="space-y-4">
+                      <div className="space-y-5">
                         {/* Risk Warning Bar and Document Metadata */}
                         {documentMetadata?.riskLevel && (
-                          <RiskWarningBar 
-                            riskLevel={documentMetadata.riskLevel}
-                            riskFactors={documentMetadata.riskFactors}
-                          />
+                          <AnimatedSection delay={100}>
+                            <RiskWarningBar 
+                              riskLevel={documentMetadata.riskLevel}
+                              riskFactors={documentMetadata.riskFactors}
+                            />
+                          </AnimatedSection>
                         )}
                         {documentMetadata && (
-                          <DocumentMetadata
-                            documentType={documentMetadata.documentType}
-                            complexity={documentMetadata.complexity}
-                            wordCount={documentMetadata.wordCount}
-                            pageCount={documentMetadata.pageCount}
-                            keyParties={documentMetadata.keyParties}
-                          />
-                        )}
-
-                        {/* Extracted Text */}
-                        {extractedText && (
-                          <ExpandableContent
-                            title="Extracted Text"
-                            content={extractedText}
-                            defaultExpanded={false}
-                            maxPreviewLength={50}
-                          />
+                          <AnimatedSection delay={200}>
+                            <DocumentMetadata
+                              documentType={documentMetadata.documentType}
+                              complexity={documentMetadata.complexity}
+                              wordCount={documentMetadata.wordCount}
+                              pageCount={documentMetadata.pageCount}
+                              keyParties={documentMetadata.keyParties}
+                            />
+                          </AnimatedSection>
                         )}
 
                         {/* Enhanced Detailed Analysis */}
                         {detailedExplanation && (
-                          <div className="px-4 py-3 space-y-2 border-l-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-slate-800 dark:border-blue-400">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                              <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300">Detailed Analysis</h3>
+                          <AnimatedSection delay={300}>
+                            <div className="px-5 py-4 space-y-2 border-l-4 border-blue-500 rounded-lg shadow-sm bg-blue-50 dark:bg-slate-800 dark:border-blue-400">
+                              <div className="flex items-center gap-2 mb-4">
+                                <Info className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                                  <TypewriterText text="Detailed Analysis" speed={8} />
+                                </h3>
+                              </div>
+                              <div className="space-y-4">
+                                {formatDetailedExplanation(detailedExplanation)}
+                              </div>
                             </div>
-                            <div className="space-y-3">
-                              {formatDetailedExplanation(detailedExplanation)}
-                            </div>
-                          </div>
+                          </AnimatedSection>
                         )}
 
                         {/* Summary */}
                         {summary && (
-                          <div className="px-4 py-3 space-y-2 border-r-4 border-blue-500 rounded-md shadow-sm bg-blue-50 dark:bg-slate-800 dark:border-blue-400">
-                            <h3 className="mb-2 text-base font-bold text-blue-700 dark:text-blue-300">Executive Summary</h3>
-                            <div className="prose-sm prose text-gray-900 max-w-none dark:prose-invert dark:text-gray-100">
-                              <ReactMarkdown>{summary.replace(/^\*+/, '')}</ReactMarkdown>
+                          <AnimatedSection delay={400}>
+                            <div className="px-5 py-4 space-y-3 border-l-4 border-green-500 rounded-lg shadow-sm bg-green-50 dark:bg-slate-800 dark:border-green-400">
+                              <h3 className="text-lg font-bold text-green-700 dark:text-green-300">
+                                <TypewriterText text="Executive Summary" speed={8} />
+                              </h3>
+                              <div className="prose prose-sm text-gray-800 max-w-none dark:prose-invert dark:text-gray-200 leading-relaxed">
+                                <TypewriterText text={summary.replace(/^\*+/, '').replace(/\*\*(.*?)\*\*/g, '$1')} speed={3} delay={100} />
+                              </div>
                             </div>
-                          </div>
+                          </AnimatedSection>
+                        )}
+
+                        {/* Extracted Text */}
+                        {extractedText && (
+                          <AnimatedSection delay={500}>
+                            <ExpandableContent
+                              title="Full Document Text"
+                              content={extractedText}
+                              defaultExpanded={false}
+                              maxPreviewLength={150}
+                            />
+                          </AnimatedSection>
                         )}
                       </div>
                     ) : contentType === "extracted-text" ? (
@@ -255,8 +338,8 @@ export default function MessageBubble({
                         maxPreviewLength={200}
                       />
                     ) : (
-                      <div className="prose prose-xs sm:prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown>{content}</ReactMarkdown>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <TypewriterText text={content} speed={25} />
                       </div>
                     )}
                   </>
@@ -265,12 +348,12 @@ export default function MessageBubble({
             )}
           </div>
           {timestamp && !isProcessing && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
               {formatTime(timestamp)}
             </span>
           )}
         </div>
       </div>
-    </div>
+    </AnimatedSection>
   );
 }

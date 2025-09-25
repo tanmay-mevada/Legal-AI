@@ -38,10 +38,19 @@ export default function FileUploadArea({ onFileUpload, disabled = false }: FileU
   };
 
   const handleFileSelect = (file: File) => {
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Validate file type - Updated to match Document AI supported formats
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/tiff',
+      'image/webp',
+      'image/bmp'
+    ];
     if (!allowedTypes.includes(file.type)) {
-      alert('File type not supported. Please upload PDF, DOC, or DOCX files only.');
+      alert('File type not supported. Please upload PDF or image files (JPEG, PNG, GIF, TIFF, WebP, BMP). Word documents are not currently supported.');
       return;
     }
 
@@ -138,7 +147,7 @@ export default function FileUploadArea({ onFileUpload, disabled = false }: FileU
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.tiff,.webp,.bmp"
             onChange={handleFileInputChange}
             className="hidden"
             disabled={disabled}
@@ -155,7 +164,7 @@ export default function FileUploadArea({ onFileUpload, disabled = false }: FileU
               Drag and drop your file here, or click to browse
             </p>
             <div className="text-xs text-gray-500 dark:text-gray-500">
-              Supports PDF, DOC, DOCX files up to 20MB
+              Supports PDF and image files (JPEG, PNG, GIF, TIFF, WebP, BMP) up to 20MB
             </div>
           </div>
         </div>

@@ -1,57 +1,85 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResponsiveLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
-  sidebarWidth?: string;
 }
 
 export default function ResponsiveLayout({ 
   sidebar, 
-  mainContent, 
-  sidebarWidth = "w-80" 
+  mainContent
 }: ResponsiveLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Close mobile menu on desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="fixed z-50 lg:hidden top-3 left-3">
         <Button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           size="sm"
-          className="h-10 w-10 rounded-full p-0 bg-white dark:bg-gray-800 shadow-lg"
+          className="p-0 transition-colors bg-white border border-gray-200 rounded-full shadow-lg h-11 w-11 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
-          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
       </div>
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-label="Close menu"
         />
       )}
 
       {/* Sidebar */}
       <div className={`
         flex h-full flex-col border-r bg-white dark:border-gray-800 dark:bg-gray-900
-        ${sidebarWidth} lg:${sidebarWidth} lg:relative lg:translate-x-0
+        w-80 lg:w-80 lg:relative lg:translate-x-0
         fixed lg:static top-0 left-0 z-50
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        shadow-xl lg:shadow-none
       `}>
         {sidebar}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {mainContent}
+      <div className="relative flex flex-col flex-1 min-w-0">
+        <div className="w-full h-16 lg:hidden" /> {/* Spacer for mobile menu button */}
+        <div className="flex-1 overflow-hidden">
+          {mainContent}
+        </div>
       </div>
     </div>
   );

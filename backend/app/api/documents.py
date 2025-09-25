@@ -150,16 +150,20 @@ def create_document(payload: DocumentCreate, authorization: str | None = Header(
                 detail="File appears to be empty. Please upload a valid document."
             )
 
-        # File type validation
+        # File type validation - Based on Google Document AI supported formats
         allowed_types = [
             "application/pdf",
-            "application/msword", 
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "image/jpeg",
+            "image/png", 
+            "image/gif",
+            "image/tiff",
+            "image/webp",
+            "image/bmp"
         ]
         if payload.content_type not in allowed_types:
             raise HTTPException(
                 status_code=400,
-                detail="File type not supported. Please upload PDF, DOC, or DOCX files only."
+                detail="File type not supported. Please upload PDF or image files (JPEG, PNG, GIF, TIFF, WebP, BMP). Word documents (DOC/DOCX) are not currently supported by our document processing service."
             )
 
         # Generate unique document identifier: user_id + original_filename
@@ -330,7 +334,7 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
         # 3. Process with Document AI
         try:
             print("Processing with Document AI...")
-            result = process_document_bytes(file_bytes)
+            result = process_document_bytes(file_bytes, doc["content_type"])
             print("Document AI processing completed")
         except DocumentAIError as e:
             print(f"Document AI error: {e.message}")
