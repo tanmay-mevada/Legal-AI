@@ -33,6 +33,10 @@ interface ChatAreaProps {
   isProcessing: boolean;
   onFileUpload: (file: File) => void;
   onNewChat: () => void;
+  user?: {
+    displayName?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 export default function ChatArea({
@@ -40,6 +44,7 @@ export default function ChatArea({
   isProcessing,
   onFileUpload,
   onNewChat,
+  user,
 }: ChatAreaProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -171,10 +176,9 @@ export default function ChatArea({
     <div className="flex flex-col h-full">
       {/* Header */}
       <MobileHeader
-  title={selectedDocument ? selectedDocument.file_name : "New Chat"}
+        title={selectedDocument ? selectedDocument.file_name : "New Chat"}
         subtitle={selectedDocument ? `Uploaded ${new Date(selectedDocument.created_at).toLocaleDateString()}` : undefined}
-        onNewChat={onNewChat}
-        showNewChatButton={true}
+        user={user}
       />
 
       {/* Messages */}

@@ -316,13 +316,37 @@ def process_file(doc_id: str, authorization: str | None = Header(None)):
         print(f"Bucket: {bucket}")
         print(f"Path used for download: {clean_path}")
 
+        # Debug: List files in the bucket to see what's actually there
+        try:
+            print("Listing files in bucket to debug...")
+            files_list = supabase.storage.from_(bucket).list()
+            print(f"Files in bucket root: {files_list}")
+            
+            # Also try to list files in user-files folder
+            try:
+                user_files = supabase.storage.from_(bucket).list("user-files")
+                print(f"Files in user-files folder: {user_files}")
+            except Exception as list_err:
+                print(f"Could not list user-files folder: {list_err}")
+                
+        except Exception as debug_err:
+            print(f"Could not list bucket contents: {debug_err}")
+
         try:
             print("Downloading file from storage...")
             file_response = supabase.storage.from_(bucket).download(clean_path)
             print(f"File response type: {type(file_response)}")
         except Exception as e:
             print(f"Storage download failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Storage download failed: {e}")
+            # Try with different path variations
+            try:
+                print("Trying download without user-files prefix...")
+                filename_only = clean_path.replace("user-files/", "")
+                file_response = supabase.storage.from_(bucket).download(filename_only)
+                print(f"Download successful with filename only: {filename_only}")
+            except Exception as e2:
+                print(f"Alternative download also failed: {e2}")
+                raise HTTPException(status_code=500, detail=f"Storage download failed. File may not exist or incorrect permissions. Original error: {e}")
 
         if not file_response:
             print("Empty file response from storage")

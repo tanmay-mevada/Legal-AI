@@ -62,8 +62,42 @@ node_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+# Environment files - CRITICAL: Never commit secrets!
 .env
+.env.local
+.env.*.local
+*.env
+
+# Next.js build outputs
+.next/
+out/
+build/
+
+# Temporary and test files
+*.tmp
+*.temp
+test.txt
+*.test.backup
+
+# Documentation cleanup files  
+*.md.backup
+*_RESOLVED.md
+*_SUCCESS.md
+*_FIX.md
+*_FIXED.md
+
+# Duplicate directories
+tautology/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # dataconnect generated files
 .dataconnect

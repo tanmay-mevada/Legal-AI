@@ -1,0 +1,103 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment files - CRITICAL: Never commit these!
+.env
+.env.local
+.env.*.local
+*.env
+
+# Google Cloud credentials - SECURITY RISK if committed
+serviceAccountKey.json
+*-service-account-key.json
+credentials.json
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+*.out
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+temp/
+
+# Test files (if they're temporary)
+test_*.py
+*_test_temp.py
+final_test.py
+
+# OS files  
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation cleanup files
+*.md.backup
+*_RESOLVED.md
+*_SUCCESS.md
+*_FIX.md
+*_FIXED.md
+
+# PowerShell scripts (if temporary)
+*.ps1.backup
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+.cache/
+
+# Docker
+.dockerignore.backup

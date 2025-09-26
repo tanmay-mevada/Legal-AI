@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { isUserAdmin } from "@/lib/admin";
 
 interface AdminAuthGuardProps {
   children: React.ReactNode;
@@ -16,12 +17,8 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Check if user is admin (you can customize this logic)
-        const adminEmails = [
-          "admin@legalai.com", // Add your admin email here
-          "tanma@example.com", // Add more admin emails as needed
-        ];
-        setIsAdmin(adminEmails.includes(firebaseUser.email || ""));
+        // Check if user is admin using centralized configuration
+        setIsAdmin(isUserAdmin(firebaseUser.email));
       }
       setLoading(false);
     });

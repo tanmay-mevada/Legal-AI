@@ -1,0 +1,10 @@
+# Ignore the tautology firebase functions directory
+tautology/
+# Ignore build outputs
+.next/
+out/
+# Ignore node modules
+node_modules/
+# Ignore generated files
+*.log
+.vercel

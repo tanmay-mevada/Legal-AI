@@ -19,6 +19,8 @@ try:
     from app.api.documents import router as documents_router
     from app.api.admin import router as admin_router
     from app.api.user_activity import router as activity_router
+    from app.api.monitoring import router as monitoring_router
+    from app.api.debug import router as debug_router
     from app.api import process
     logger.info("All routers imported successfully")
 except Exception as e:
@@ -30,10 +32,12 @@ app = FastAPI(title="Legal AI API", version="1.0.0")
 # Include your API routers
 try:
     app.include_router(process.router, prefix="/process", tags=["process"])
-    app.include_router(upload_router, prefix="/upload", tags=["upload"])
+    app.include_router(upload_router, prefix="/api", tags=["upload"])
     app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
     app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
     app.include_router(activity_router, prefix="/api/activity", tags=["activity"])
+    app.include_router(monitoring_router, prefix="/api/monitoring", tags=["monitoring"])
+    app.include_router(debug_router, prefix="/api/debug", tags=["debug"])
     logger.info("All routers registered successfully")
 except Exception as e:
     logger.error(f"Failed to register routers: {e}")

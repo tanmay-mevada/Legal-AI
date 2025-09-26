@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
-import { API_URLS } from "@/lib/config";
+import { API_URLS, buildApiUrl } from "@/lib/config";
 // import { getAuth } from "firebase/auth";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
@@ -66,14 +66,10 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
     }
   };
 
-  // Handle file upload - simplified version that bypasses direct storage upload
+  // Handle file upload using backend upload endpoint
   const handleFileUpload = async (file: File) => {
     setIsProcessing(true);
     try {
-      // Sanitize file name for storage
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `user-files/${safeName}`;
-
       const token = await auth.currentUser?.getIdToken();
       
       // Check if document already exists first
@@ -83,7 +79,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
       
       if (existingResponse.ok) {
         const data = await existingResponse.json();
-        const found = data.documents?.find((d: Document) => d.bucket_path === path);
+        const found = data.documents?.find((d: Document) => d.file_name === file.name);
         if (found) {
           if (found.status === "processed") {
             setSelectedDocumentId(found.id);
@@ -108,31 +104,27 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
         }
       }
 
-      // For now, skip the direct storage upload and create document record directly
-      // This bypasses the 400 storage error until we can configure Supabase RLS properly
-      const createResponse = await fetch(API_URLS.DOCUMENTS, {
+      // Use backend upload endpoint for reliable file upload
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadResponse = await fetch(buildApiUrl("/api/upload"), {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          file_name: file.name,
-          bucket_path: path,
-          content_type: file.type,
-          size_bytes: file.size,
-        }),
+        body: formData,
       });
 
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        console.error("Document creation failed:", errorData.detail || "unknown error");
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        console.error("Document upload failed:", errorData.detail || "unknown error");
         
         // Show user-friendly error messages
         let userMessage = "Failed to upload document. Please try again.";
-        if (createResponse.status === 409) {
+        if (uploadResponse.status === 409) {
           userMessage = errorData.detail || "This document already exists.";
-        } else if (createResponse.status === 400) {
+        } else if (uploadResponse.status === 400) {
           userMessage = errorData.detail || "Invalid file format or size.";
         }
         
@@ -143,52 +135,31 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
         return;
       }
 
-      const { document, isExisting } = await createResponse.json();
+      const { document } = await uploadResponse.json();
       
-      // Update documents list - prioritize existing document or add new one
-      const existingIndex = documents.findIndex(d => d.id === document.id);
-      if (existingIndex === -1) {
-        setDocuments(prev => [document, ...prev]);
-      } else {
-        // Move existing document to top of list
-        setDocuments(prev => [document, ...prev.filter(d => d.id !== document.id)]);
-      }
+      // Update documents list - add new document
+      setDocuments(prev => [document, ...prev]);
       
       // Immediately show the document to reduce perceived delay
       setSelectedDocumentId(document.id);
 
-      if (isExisting) {
-        // Document already exists - show immediately, no processing needed
-        console.log(`Opening existing conversation for: ${document.file_name}`);
-        setIsProcessing(false);
+      // New document uploaded successfully - start processing
+      console.log(`Starting processing for new document: ${document.file_name}`);
+      
+      // Start processing the uploaded document
+      const processResponse = await fetch(API_URLS.PROCESS_DOCUMENT(document.id), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (processResponse.ok) {
+        await pollForCompletion(document.id);
       } else {
-        // New document - start processing
-        console.log(`Starting processing for new document: ${document.file_name}`);
-        
-        // Only start processing if document status is 'uploaded' (not already processed)
-        if (document.status === "uploaded") {
-          const processResponse = await fetch(API_URLS.PROCESS_DOCUMENT(document.id), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!processResponse.ok) {
-            console.error("Failed to start processing");
-            setIsProcessing(false);
-            return;
-          }
-
-          await pollForCompletion(document.id);
-        } else if (document.status === "processed") {
-          // Document already processed, just show it
-          setIsProcessing(false);
-        } else if (document.status === "processing") {
-          // Document is currently processing, wait for completion
-          await pollForCompletion(document.id);
-        }
+        console.error("Failed to start processing");
+        alert("Failed to start processing. Please try again.");
       }
 
     } catch (error) {
@@ -287,6 +258,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
           isProcessing={isProcessing}
           onFileUpload={handleFileUpload}
           onNewChat={handleNewChat}
+          user={user}
         />
       }
     />

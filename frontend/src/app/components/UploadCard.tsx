@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { getAuth } from "firebase/auth";
-import { API_URLS } from "@/lib/config";
+import { buildApiUrl } from "@/lib/config";
 
 type Props = {
   onUploaded: (args: { docId: string; fileName: string; bucketPath: string }) => void;
@@ -26,74 +25,7 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
     setUploading(true);
     setStatus("Uploading...");
 
-    // Sanitize file name for Supabase Storage
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `user-files/${safeName}`;
-
-    // Try upload
-    const { error } = await supabase.storage.from("uploads").upload(path, file);
-    if (error) {
-      // If resource exists, handle re-upload logic
-      if (error.message && error.message.includes("already exists")) {
-        setStatus("File already exists. Checking status...");
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) {
-          setUploading(false);
-          setStatus("User not logged in (Firebase)");
-          return;
-        }
-        const token = await user.getIdToken();
-        // Find document by bucket_path
-  const docRes = await fetch(API_URLS.DOCUMENTS, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const docList = await docRes.json();
-        type Document = {
-          id: string;
-          file_name: string;
-          bucket_path: string;
-          status: string;
-        };
-        const found = docList.documents?.find((d: Document) => d.bucket_path === path);
-        if (!found) {
-          setUploading(false);
-          setStatus("File exists in storage but not in database. Please contact support or try a different file.");
-          return;
-        }
-        if (found.status === "processed") {
-          setStatus("File already processed. Showing chat...");
-          onUploaded({ docId: found.id, fileName: found.file_name, bucketPath: found.bucket_path });
-        } else {
-          setStatus("File exists but not processed. Processing now...");
-          // Trigger processing
-          const processRes = await fetch(API_URLS.PROCESS_DOCUMENT(found.id), {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          const processData = await processRes.json();
-          if (processRes.ok) {
-            setStatus("File processed. Showing chat...");
-            onUploaded({ docId: found.id, fileName: found.file_name, bucketPath: found.bucket_path });
-          } else {
-            setStatus("Processing failed: " + (processData.detail || "unknown error"));
-          }
-        }
-        setUploading(false);
-        return;
-      } else {
-        setUploading(false);
-        setStatus("Upload failed: " + error.message);
-        return;
-      }
-    }
-
-    // Normal upload flow
+    // Use backend upload endpoint for reliable uploads
     const auth = getAuth();
     const user = auth.currentUser;
     if (!user) {
@@ -102,33 +34,45 @@ export default function UploadCard({ onUploaded, onStatus }: Props) {
       return;
     }
 
-    const token = await user.getIdToken();
-  const res = await fetch(API_URLS.DOCUMENTS, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        file_name: file.name,
-        bucket_path: path,
-        content_type: file.type,
-        size_bytes: file.size,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setUploading(false);
-      setStatus("Metadata insert failed: " + (data.detail || "unknown error"));
-      return;
-    }
-    if (data && data.document && data.document.id) {
-      onUploaded({ docId: data.document.id, fileName: file.name, bucketPath: path });
+    try {
+      const token = await user.getIdToken();
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadUrl = buildApiUrl("/api/upload");
+      console.log("DEBUG: Using upload URL:", uploadUrl);
+      setStatus(`Uploading to: ${uploadUrl}...`);
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadRes.ok) {
+        setUploading(false);
+        setStatus(`Upload failed: ${uploadData.detail || 'Unknown error'}`);
+        return;
+      }
+
+      // Upload successful
       setStatus("Upload complete. Ready to process.");
-    } else {
-      setStatus("Upload succeeded, but no document ID returned.");
+      onUploaded({ 
+        docId: uploadData.document.id, 
+        fileName: uploadData.document.file_name, 
+        bucketPath: uploadData.document.bucket_path 
+      });
+      setUploading(false);
+
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploading(false);
+      setStatus(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    setUploading(false);
   };
 
   return (

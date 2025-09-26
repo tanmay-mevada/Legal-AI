@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { signInWithPopup, onAuthStateChanged, type User } from "firebase/auth"
+import { signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, type User } from "firebase/auth"
 import { auth, provider } from "@/lib/firebase"
 import { API_URLS } from "@/lib/config"
 import ChatLayout from "./components/chat/ChatLayout"
@@ -12,6 +12,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check for redirect result first
+    getRedirectResult(auth).catch((error) => {
+      console.warn("Redirect auth error:", error)
+    })
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
@@ -35,9 +40,16 @@ export default function HomePage() {
 
   const login = async () => {
     try {
+      // Try popup first, fallback to redirect if blocked
       await signInWithPopup(auth, provider)
     } catch (error) {
-      console.error("Login failed:", error)
+      const authError = error as { code?: string }
+      console.warn("Popup blocked, using redirect:", error)
+      if (authError.code === 'auth/popup-blocked' || authError.code === 'auth/cancelled-popup-request') {
+        signInWithRedirect(auth, provider)
+      } else {
+        console.error("Login failed:", error)
+      }
     }
   }
 

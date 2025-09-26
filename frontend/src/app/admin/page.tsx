@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 //import { supabase } from "@/lib/supabaseClient";
-import AdminDashboard from "./components/AdminDashboard";
+import EnhancedAdminDashboard from "./components/EnhancedAdminDashboard";
 //import AdminAuthGuard from "./components/AdminAuthGuard";
 
 // interface Document {
@@ -96,7 +96,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <AdminDashboard />
+      <EnhancedAdminDashboard />
     </div>
   );
 }
