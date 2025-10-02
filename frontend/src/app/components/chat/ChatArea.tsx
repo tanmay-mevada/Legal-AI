@@ -43,7 +43,7 @@ export default function ChatArea({
   selectedDocument,
   isProcessing,
   onFileUpload,
-  onNewChat,
+
   user,
 }: ChatAreaProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);

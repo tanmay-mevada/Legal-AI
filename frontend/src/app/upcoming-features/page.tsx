@@ -14,11 +14,8 @@ import {
   MessageSquare,
   Smartphone,
   Database,
-  Search,
-  ArrowLeft
+  Search
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function UpcomingFeaturesPage() {
   const features = [
@@ -139,75 +136,70 @@ export default function UpcomingFeaturesPage() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "Low":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">
+        <div className="mb-8 sm:mb-12 text-center">
+          <h1 className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight">
             Upcoming Features
           </h1>
-          <p className="max-w-3xl mx-auto text-xl text-gray-600">
+          <p className="max-w-4xl mx-auto text-lg sm:text-xl text-gray-600 leading-relaxed px-4">
             Discover the exciting new capabilities coming to TautologyAI. 
             Our roadmap focuses on enhancing user experience, expanding AI capabilities, 
             and building the future of legal technology.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {features.map((feature, index) => (
-            <Card key={index} className="transition-shadow duration-200 hover:shadow-lg">
+            <Card key={index} className="h-full transition-all duration-300 hover:shadow-xl hover:scale-105 bg-white/80 backdrop-blur-sm border-0 shadow-md">
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-blue-600">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                     {feature.icon}
                   </div>
-                </div>
-                <CardTitle className="text-lg">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm leading-relaxed text-gray-600">
-                  {feature.description}
-                </p>
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <Badge className={getStatusColor(feature.status)}>
+                  <Badge className={`${getStatusColor(feature.status)} text-xs font-medium px-2 py-1`}>
                     {feature.status}
                   </Badge>
-                  <span className="text-xs font-medium text-gray-500">
+                </div>
+                <CardTitle className="text-xl font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
+                  {feature.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm leading-relaxed text-gray-600 line-clamp-4 min-h-[5rem]">
+                  {feature.description}
+                </p>
+                <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-100">
+                  <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                     {feature.timeline}
                   </span>
+                  <div className={`w-2 h-2 rounded-full ${
+                    feature.priority === 'High' ? 'bg-red-400' : 
+                    feature.priority === 'Medium' ? 'bg-yellow-400' : 'bg-green-400'
+                  }`} title={`${feature.priority} Priority`}></div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="mt-12 text-center">
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="p-8">
-              <h2 className="mb-4 text-2xl font-bold text-gray-900">
+        <div className="mt-12 sm:mt-16 text-center px-4">
+          <Card className="max-w-3xl mx-auto bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-6 sm:p-8 lg:p-10">
+              <h2 className="mb-4 text-2xl sm:text-3xl font-bold text-gray-900">
                 Have a Feature Suggestion?
               </h2>
-              <p className="mb-6 text-gray-600">
+              <p className="mb-6 sm:mb-8 text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
                 We are always looking to improve TautologyAI based on user feedback. 
                 Share your ideas and help shape the future of legal AI technology.
               </p>
-              <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <div className="flex flex-col justify-center gap-4 sm:flex-row sm:gap-6">
                 <a 
                   href="/about#contact"
-                  className="inline-flex items-center justify-center px-6 py-3 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 text-white transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold"
                 >
                   Contact Us
                 </a>
@@ -215,7 +207,7 @@ export default function UpcomingFeaturesPage() {
                   href="https://github.com/tanmay-mevada/Legal-AI/issues"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-6 py-3 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 text-gray-700 transition-all duration-200 border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transform hover:scale-105 shadow-md hover:shadow-lg font-semibold"
                 >
                   GitHub Issues
                 </a>

@@ -63,22 +63,21 @@ export default function DocumentMetadata({
       <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
         
         {documentType && (
-          
-          <div className="flex items-center w-3 h-3 gap-2 text-gray-500">
-            <span className="w-3 h-3 gap-2 text-gray-500">{getDocumentTypeIcon(documentType)}</span>
-            <div>
+          <div className="flex items-center gap-2">
+            {getDocumentTypeIcon(documentType)}
+            <div className="flex-1 min-w-0">
               <span className="font-medium text-gray-700 dark:text-gray-300">Type:</span>
-              <span className="ml-1 text-gray-600 dark:text-gray-400">{documentType}</span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400 break-words">{documentType}</span>
             </div>
           </div>
         )}
         
         {complexity && (
           <div className="flex items-center gap-2">
-            <Tag className="w-3 h-3 text-gray-500" />
-            <div>
+            <Tag className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
               <span className="font-medium text-gray-700 dark:text-gray-300">Complexity:</span>
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${getComplexityColor(complexity)}`}>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${getComplexityColor(complexity)} break-words`}>
                 {complexity}
               </span>
             </div>
@@ -87,8 +86,8 @@ export default function DocumentMetadata({
         
         {wordCount && (
           <div className="flex items-center gap-2">
-            <WholeWord className="w-3 h-3 text-gray-500" />
-            <div>
+            <WholeWord className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
               <span className="font-medium text-gray-700 dark:text-gray-300">Words:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">{wordCount.toLocaleString()}</span>
             </div>

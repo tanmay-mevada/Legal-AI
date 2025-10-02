@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import {
@@ -40,7 +40,7 @@ export default function SystemAlerts() {
 
   const API_BASE = "https://legal-ai-backend-63563783552.us-central1.run.app/api";
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       setLoading(true);
       const token = await user?.getIdToken();
@@ -63,7 +63,7 @@ export default function SystemAlerts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -72,7 +72,7 @@ export default function SystemAlerts() {
       const interval = setInterval(fetchAlerts, 60000);
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, fetchAlerts]);
 
   const getAlertIcon = (type: string) => {
     switch (type) {

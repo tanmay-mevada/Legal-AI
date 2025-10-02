@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import {
   MessageSquare, 
   Shield, 
   Zap, 
-  Users, 
+ 
   Globe,
   ArrowLeft,
   ExternalLink,
@@ -51,7 +52,7 @@ export default function AboutPage() {
       } else {
         setSubmitStatus('error');
       }
-    } catch (error) {
+    } catch {
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -124,7 +125,7 @@ export default function AboutPage() {
         {/* Team Section */}
         <Card className="p-6 mb-8 bg-white border border-gray-200 sm:p-8 dark:bg-gray-800 dark:border-gray-700">
           <div className="flex items-center mb-6">
-            <img src="/logo.png" alt="Team TurboC++ Logo" className="object-cover w-10 h-10 mr-3 bg-white rounded-lg dark:bg-gray-800" />
+            <Image src="/logo.png" alt="Team TurboC++ Logo" width={40} height={40} className="object-cover w-10 h-10 mr-3 bg-white rounded-lg dark:bg-gray-800" />
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
               Team TurboC++
             </h2>
