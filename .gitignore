@@ -1,65 +1,224 @@
+# =====================================================
+# LEGAL AI PROJECT - COMPREHENSIVE .GITIGNORE
+# =====================================================
+
 # ---------------------
-# Node / Next.js frontend
+# SECRETS & ENVIRONMENT (CRITICAL - NEVER COMMIT!)
 # ---------------------
-node_modules/
+.env
+.env.local
+.env.*.local
+*.env
+.env.production
+.env.development
+
+# Firebase Service Account Keys (CRITICAL!)
+serviceAccountKey*.json
+firebase-*.json
+serviceAccountKey.json
+serviceAccountKey0.json
+serviceAccountKey1.json
+*-firebase-adminsdk-*.json
+
+# API Keys and Config
+config.json
+secrets.json
+credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ---------------------
+# FRONTEND (Next.js/React)
+# ---------------------
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.env*
+frontend/firebase-debug.log*
+frontend/.firebase/
+
+# Next.js specific
 .next/
 out/
-dist/
 build/
+.vercel/
+.turbo/
 
-# Logs
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Package manager files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.npm
+.yarn-integrity
+*.tgz
 
-# Firebase / Service account keys
-serviceAccountKey*.json
-firebase-*.json
-serviceAccountKey0.json
-serviceAccountKey1.json 
-serviceAccountKey.json
+# ESLint cache
+.eslintcache
 
-# Env files (keep secrets local)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Storybook build outputs
+storybook-static/
 
-# Editor / IDE
+# ---------------------
+# BACKEND (Python/FastAPI)
+# ---------------------
+backend/__pycache__/
+backend/*.py[cod]
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+backend/venv/
+backend/.venv/
+backend/env/
+backend/ENV/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# ---------------------
+# DATABASE & STORAGE
+# ---------------------
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sql.backup
+
+# ---------------------
+# LOGS & TEMPORARY FILES
+# ---------------------
+*.log
+*.out
+*.pid
+*.seed
+*.pid.lock
+*.tmp
+*.temp
+*.backup
+*~
+.#*
+
+# Firebase logs
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Google Cloud logs
+gcloud-debug.log*
+
+# ---------------------
+# GOOGLE CLOUD & DEPLOYMENT
+# ---------------------
+gc/
+google-cloud-sdk/
+.gcloudignore
+.dockerignore.bak
+
+# ---------------------
+# IDE & EDITOR FILES
+# ---------------------
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS files
+# ---------------------
+# OS GENERATED FILES
+# ---------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # ---------------------
-# Python backend (if used)
+# DOCUMENTATION BACKUPS
 # ---------------------
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-.eggs/
-*.log
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
+*.md.backup
+*_RESOLVED.md
+*_SUCCESS.md
+*_FIX.md
+*_FIXED.md
+NOTES.md
+TODO.md
 
 # ---------------------
-# General
+# DUPLICATE/LEGACY DIRECTORIES
 # ---------------------
-*.log
-*.pid
-*.seed
-*.pid.lock
+tautology/
+legacy/
+old/
+backup/
+archives/
+
+# ---------------------
+# TESTING & CI/CD
+# ---------------------
+.nyc_output/
 coverage/
+.coverage
+test-results/
+playwright-report/
+test-report/
+
+# ---------------------
+# MISC PROJECT FILES
+# ---------------------
+.dataconnect
+.firebase/
+.firebaserc.backup
+.history/
+.terra/
