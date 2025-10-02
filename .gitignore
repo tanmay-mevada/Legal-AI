@@ -185,7 +185,7 @@ Thumbs.db
 Desktop.ini
 
 # ---------------------
-# DOCUMENTATION BACKUPS
+# DOCUMENTATION BACKUPS & TEMP FILES
 # ---------------------
 *.md.backup
 *_RESOLVED.md
@@ -194,6 +194,20 @@ Desktop.ini
 *_FIXED.md
 NOTES.md
 TODO.md
+
+# Temporary documentation files (should not be in repo)
+ADMIN_PANEL_SUMMARY.md
+BACKEND_ENVIRONMENT_FIXED.md
+CRITICAL_FIXES_APPLIED.md
+DEPLOYMENT_SUCCESS.md
+LIVE_DEPLOYMENT_STATUS.md
+PRODUCTION_DEPLOYMENT_CHECKLIST.md
+STORAGE_DEBUG_ANALYSIS.md
+*_DEPLOYMENT_*.md
+*_ANALYSIS_*.md
+*_SUMMARY.md
+*_STATUS.md
+*_CHECKLIST.md
 
 # ---------------------
 # DUPLICATE/LEGACY DIRECTORIES
